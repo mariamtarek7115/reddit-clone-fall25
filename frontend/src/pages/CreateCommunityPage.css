@@ -1,0 +1,301 @@
+.reddit-create-community {
+  background: white;
+  min-height: 100vh;
+}
+
+.cc-header {
+  border-bottom: 1px solid #edeff1;
+  padding: 32px 24px 24px;
+}
+
+.cc-header-content h1 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 500;
+  color: #1a1a1b;
+}
+
+.cc-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #7c7c7c;
+  line-height: 1.4;
+}
+
+.cc-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 8px;
+}
+
+.cc-progress-step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #edeff1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #7c7c7c;
+}
+
+.cc-progress-step.active {
+  border-color: #ff4500;
+  background: #ff4500;
+  color: white;
+}
+
+.cc-progress-line {
+  flex: 1;
+  height: 2px;
+  background: #edeff1;
+  max-width: 100px;
+}
+
+.cc-content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+.cc-step {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cc-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cc-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1b;
+  display: flex;
+  justify-content: between;
+  align-items: center;
+}
+
+.cc-char-count {
+  font-size: 12px;
+  color: #7c7c7c;
+  margin-left: auto;
+}
+
+.cc-name-input-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.cc-prefix {
+  background: #f6f7f8;
+  padding: 12px 16px;
+  border: 1px solid #edeff1;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  color: #1a1a1b;
+  font-size: 14px;
+}
+
+.cc-name-input,
+.cc-description-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #edeff1;
+  border-radius: 0 4px 4px 0;
+  font-size: 14px;
+  background: white;
+}
+
+.cc-description-input {
+  width: 100%;
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Topics Step */
+.cc-topics-header {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cc-topics-count {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1b;
+}
+
+.cc-topics-filter {
+  padding: 8px 12px;
+  border: 1px solid #edeff1;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 200px;
+}
+
+.cc-topics-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cc-topic-category {
+  border: 1px solid #edeff1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cc-category-title {
+  background: #f6f7f8;
+  margin: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1b;
+  border-bottom: 1px solid #edeff1;
+}
+
+.cc-topics-list {
+  padding: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-topic-btn {
+  padding: 8px 16px;
+  border: 1px solid #edeff1;
+  border-radius: 20px;
+  background: white;
+  color: #1a1a1b;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cc-topic-btn:hover:not(:disabled) {
+  border-color: #ff4500;
+  background: #fff0e6;
+}
+
+.cc-topic-btn.selected {
+  background: #ff4500;
+  color: white;
+  border-color: #ff4500;
+}
+
+.cc-topic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Community Type Step */
+.cc-type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cc-type-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #edeff1;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.cc-type-option:hover {
+  border-color: #ff4500;
+}
+
+.cc-type-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cc-type-content strong {
+  font-size: 14px;
+  color: #1a1a1b;
+}
+
+.cc-type-content span {
+  font-size: 12px;
+  color: #7c7c7c;
+  line-height: 1.4;
+}
+
+.cc-terms {
+  padding: 16px;
+  background: #f6f7f8;
+  border-radius: 4px;
+  margin-top: 16px;
+}
+
+.cc-terms p {
+  margin: 0;
+  font-size: 12px;
+  color: #7c7c7c;
+  line-height: 1.4;
+}
+
+.cc-terms strong {
+  color: #ff4500;
+}
+
+/* Actions */
+.cc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #edeff1;
+}
+
+.cc-back-btn {
+  padding: 12px 24px;
+  border: 1px solid #ff4500;
+  border-radius: 20px;
+  background: white;
+  color: #ff4500;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cc-next-btn,
+.cc-create-final-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 20px;
+  background: #ff4500;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cc-next-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cc-back-btn:hover,
+.cc-next-btn:hover:not(:disabled),
+.cc-create-final-btn:hover {
+  opacity: 0.9;
+}
