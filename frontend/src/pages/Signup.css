@@ -93,6 +93,11 @@ body {
 .signup_main .ending span {
   font-weight: 600;
 }
+.signup_main .ending span.login_link {
+  cursor: pointer;
+  color: #0079d3; /* optional: make it blue like Reddit */
+}
+
 .signup_main h1 {
   margin-top: 0;
   margin-bottom: 8px;
