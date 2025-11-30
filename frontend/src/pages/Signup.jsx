@@ -7,44 +7,54 @@ function Signup() {
   const [username, setUsername] = useState(""); 
   const [password, setPassword] = useState("");
 
+  const [dialogMessage, setDialogMessage] = useState(""); // NEW — message for dialog
+  const [showDialog, setShowDialog] = useState(false);    // NEW — toggle dialog
+
   const navigate = useNavigate();
 
-  const handleSignup = () => {
+  const openDialog = (msg) => {
+    setDialogMessage(msg);
+    setShowDialog(true);
+  };
+
+  const closeDialog = () => {
+    setShowDialog(false);
+    setDialogMessage("");
+  };
+
+  const handleSignup = async () => {
     if (!username) {
-      alert("Username is required");
+      openDialog("Username is required");
       return;
     }
     if (!password) {
-      alert("Password is required");
+      openDialog("Password is required");
       return;
     }
 
-    // Fixed regex: Added .* to each lookahead
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
     if (!passwordRegex.test(password)) {
-      alert(
-        "Password must be at least 8 characters and include:\n- lowercase\n- uppercase\n- number\n- special character"
+      openDialog(
+        "Password must be at least 8 characters and include:\n• lowercase\n• uppercase\n• number\n• special character"
       );
       return;
     }
 
-    // SUCCESS! Simulate signup + auto login
-    alert("Account created successfully!");
-    navigate("/");  // This will now take you to the Home page you just created
-
-    //HANDLE API
+    // EXAMPLE: after API later
+    openDialog("Account created successfully!");
+    // navigate("/");
   };
 
   const isValid = username.trim() && password;
 
   return (
     <div className="signup_main">
-        <h1>Sign Up</h1>
+      <h1>Sign Up</h1>
       <h2>Create your username and password</h2>
 
       <p className="intro">
-        Reddit is anonymous, so your username is what you’ll go by here. Choose
-        wisely—because once you get a name, you can’t change it.
+        Reddit is anonymous, so your username is what you’ll go by here.
       </p>
 
       <input
@@ -67,13 +77,20 @@ function Signup() {
 
       <p className="ending">
         Already a Reddit user?{" "}
-        <span
-          style={{ color: "blue", cursor: "pointer" }}
-          onClick={() => navigate("/login")}
-        >
+        <span className="login_link" onClick={() => navigate("/login")}>
           Log in
         </span>
       </p>
+
+      {/* 🔥 CUSTOM MODAL DIALOG */}
+      {showDialog && (
+        <div className="dialog_overlay">
+          <div className="dialog_box">
+            <p>{dialogMessage}</p>
+            <button className="dialog_close" onClick={closeDialog}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

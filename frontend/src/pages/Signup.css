@@ -100,3 +100,57 @@ body {
   font-weight: 700;
   text-align: center;
 }
+/* Darkened background behind the dialog */
+.dialog_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* White dialog box */
+.dialog_box {
+  background: white;
+  padding: 22px 28px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Dialog text */
+.dialog_box p {
+  font-size: 16px;
+  margin-bottom: 18px;
+  white-space: pre-line; /* keeps \n new lines */
+}
+
+/* Close button */
+.dialog_close {
+  background: #ff4500; 
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dialog_close:hover {
+  background: #ff5722;
+}
+
+/* Smooth animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
