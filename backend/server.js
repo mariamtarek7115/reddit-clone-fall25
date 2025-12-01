@@ -15,9 +15,8 @@ app.use(express.json());
 mongoose.connect("mongodb://localhost:27017/redditClone")
 
 // Connect to MongoDB
-
 // Use the users router
 app.use("/user", usersRoute);
 
 // Start server
-app.listen(3000, () => console.log("Server running on port 3000"));
+app.listen(5000, () => console.log("Server running on port 5000"));

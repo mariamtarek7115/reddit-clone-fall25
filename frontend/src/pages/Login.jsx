@@ -1,15 +1,14 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
 function Login() {
-   const [username, setUsername] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-   const [error, setError] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -17,13 +16,34 @@ function Login() {
       setError("Username and password are required.");
       return;
     }
-     // TODO: replace with real API call later
-     console.log("Logging in with:", { username, password });
-     // For now just simulate success:
-    // navigate("/");
+
+    try {
+      const res = await fetch("http://localhost:5000/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+      console.log("Login response:", data);
+
+      if (!res.ok) {
+        // backend sends { message: "Invalid username or password" } etc.
+        setError(data.message || "Login failed");
+        return;
+      }
+
+      // ✅ LOGIN SUCCESS → go to feed
+      navigate("/feed");
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Something went wrong. Please try again.");
+    }
   };
-    const isValid = username.trim() && password;
-    return (
+
+  const isValid = username.trim() && password;
+
+  return (
     <div className="login_main">
       <h1>Log In</h1>
       <h2>Welcome back</h2>
@@ -63,6 +83,5 @@ function Login() {
     </div>
   );
 }
-
 
 export default Login;
