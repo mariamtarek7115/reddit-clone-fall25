@@ -11,34 +11,35 @@ const CommunityPage = () => {
 
   // Mock data - replace with actual API calls later
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const currentDate = new Date();
-      const createdDate = currentDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-      
-      setCommunity({
-        name: communityName,
-        displayName: communityName.charAt(0).toUpperCase() + communityName.slice(1),
-        description: `Welcome to r/${communityName}! This is a community about ${communityName}.`,
-        membersCount: 1, // Starts with just the creator
-        createdAt: createdDate,
-        type: 'public',
-        isAdult: false,
-        isModerator: true, // Creator is moderator
-        insights: {
-          visitors: 0,
-          contributions: 0
-        }
-      });
-      
-      setPosts([]); // Empty posts for new community
-      setIsMember(true); // Creator is automatically joined
-    }, 500);
-  }, [communityName]);
+  if (!communityName) return; // 🚨 don't run if param is missing
+
+  const currentDate = new Date();
+  const createdDate = currentDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+
+  setCommunity({
+    name: communityName,
+    displayName:
+      communityName.charAt(0).toUpperCase() + communityName.slice(1),
+    description: `Welcome to r/${communityName}! This is a community about ${communityName}.`,
+    membersCount: 1,
+    createdAt: createdDate,
+    type: 'public',
+    isAdult: false,
+    isModerator: true,
+    insights: {
+      visitors: 0,
+      contributions: 0
+    }
+  });
+
+  setPosts([]);
+  setIsMember(true);
+}, [communityName]);
+
 
   const handleJoinLeave = () => {
     setIsMember(!isMember);

@@ -2,8 +2,13 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
-const User=require("./models/User");
+
+
 const usersRoute = require("./routes/userRoute");
+const communityRoute = require("./routes/communityRoute");
+const postRoute = require("./routes/postRoute");
+const commentRoute = require("./routes/commentRoute");
+const voteRoute = require("./routes/voteRoute");
 
 const app = express();
 
@@ -17,6 +22,7 @@ mongoose.connect("mongodb://localhost:27017/redditClone")
 // Connect to MongoDB
 // Use the users router
 app.use("/user", usersRoute);
+
 
 // Start server
 app.listen(5000, () => console.log("Server running on port 5000"));
