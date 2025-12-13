@@ -1,5 +1,6 @@
 // src/pages/Feed.jsx
 import React, { useState, useEffect } from "react";
+import Sidebar from "../components/Sidebar/Sidebar.jsx"; // Import Sidebar component
 import "./Feed.css";
 
 export default function Feed() {
@@ -172,114 +173,14 @@ export default function Feed() {
 
   return (
     <div className="feed">
-      {/* Sidebar */}
-      <aside
-        className={
-          sidebarOpen ? "feed-sidebar" : "feed-sidebar feed-sidebar--collapsed"
-        }
-      >
-        <div className="sidebar-header">
-          <div className="sidebar-logo">r</div>
-          {sidebarOpen && <span className="sidebar-title">reddit</span>}
-        </div>
-
-        <nav className="sidebar-nav">
-          <button
-            className={`sidebar-nav-item ${
-              sidebarActive === "Home" ? "active" : ""
-            }`}
-            onClick={() => setSidebarActive("Home")}
-          >
-            <span>🏠</span>
-            {sidebarOpen && <span>Home</span>}
-          </button>
-
-          <button
-            className={`sidebar-nav-item ${
-              sidebarActive === "Popular" ? "active" : ""
-            }`}
-            onClick={() => setSidebarActive("Popular")}
-          >
-            <span>📈</span>
-            {sidebarOpen && <span>Popular</span>}
-          </button>
-
-          <button
-            className={`sidebar-nav-item ${
-              sidebarActive === "Answers" ? "active" : ""
-            }`}
-            onClick={() => setSidebarActive("Answers")}
-          >
-            <span>💬</span>
-            {sidebarOpen && (
-              <>
-                <span>Answers</span>
-                <span className="sidebar-badge">BETA</span>
-              </>
-            )}
-          </button>
-
-          <button
-            className={`sidebar-nav-item ${
-              sidebarActive === "Explore" ? "active" : ""
-            }`}
-            onClick={() => setSidebarActive("Explore")}
-          >
-            <span>🧭</span>
-            {sidebarOpen && <span>Explore</span>}
-          </button>
-
-          {sidebarOpen && (
-            <>
-              <div className="sidebar-section-title">RESOURCES</div>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => setSidebarActive("About")}
-              >
-                About Reddit
-              </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => setSidebarActive("Advertise")}
-              >
-                Advertise
-              </button>
-              <button
-                className="sidebar-nav-item"
-                onClick={() => setSidebarActive("Developers")}
-              >
-                Developer Platform
-              </button>
-              <button className="sidebar-nav-item">
-                <span>Reddit Pro</span>
-                <span className="sidebar-badge">BETA</span>
-              </button>
-              <button className="sidebar-nav-item">Help</button>
-              <button className="sidebar-nav-item">Blog</button>
-              <button className="sidebar-nav-item">Careers</button>
-              <button className="sidebar-nav-item">Press</button>
-
-              <div className="sidebar-section-title">COMMUNITIES</div>
-              <button className="sidebar-nav-item">Best of Reddit</button>
-              <button className="sidebar-nav-item">
-                Best of Reddit in P...
-              </button>
-              <button className="sidebar-nav-item">
-                Best of Reddit in G...
-              </button>
-            </>
-          )}
-        </nav>
-
-        <div className="sidebar-footer">
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen((prev) => !prev)}
-          >
-            ☰
-          </button>
-        </div>
-      </aside>
+      <Sidebar
+        sidebarActive={sidebarActive}
+        setSidebarActive={setSidebarActive}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        toggleJoinCommunity={toggleJoinCommunity}
+        communities={communities}
+      />
 
       {/* Main content */}
       <main className="feed-main">
@@ -403,11 +304,7 @@ export default function Feed() {
                     </div>
                   </div>
                   <button
-                    className={
-                      joinedFeatured
-                        ? "btn-join btn-join--joined"
-                        : "btn-join"
-                    }
+                    className={joinedFeatured ? "btn-join btn-join--joined" : "btn-join"}
                     onClick={toggleJoinFeatured}
                   >
                     {joinedFeatured ? "Joined" : "Join"}
@@ -437,20 +334,12 @@ export default function Feed() {
                       className="feed-post-thumbnail"
                     />
                     <div className="feed-post-details">
-                      <h3 className="feed-post-title">
-                        {post.title}
-                      </h3>
-                      <p className="feed-post-subtitle">
-                        {post.subtitle}
-                      </p>
+                      <h3 className="feed-post-title">{post.title}</h3>
+                      <p className="feed-post-subtitle">{post.subtitle}</p>
                       <div className="feed-post-meta">
-                        <span className="feed-post-subreddit">
-                          {post.subreddit}
-                        </span>
+                        <span className="feed-post-subreddit">{post.subreddit}</span>
                         <span>•</span>
-                        <span className="feed-post-author">
-                          {post.author}
-                        </span>
+                        <span className="feed-post-author">{post.author}</span>
                       </div>
                       <div className="feed-post-actions">
                         <div
@@ -464,13 +353,9 @@ export default function Feed() {
                         >
                           <button
                             className={`vote-btn ${
-                              post.voteState === "up"
-                                ? "vote-btn--active"
-                                : ""
+                              post.voteState === "up" ? "vote-btn--active" : ""
                             }`}
-                            onClick={() =>
-                              handlePostVote(post.id, "up")
-                            }
+                            onClick={() => handlePostVote(post.id, "up")}
                           >
                             ▲
                           </button>
@@ -479,13 +364,9 @@ export default function Feed() {
                           </span>
                           <button
                             className={`vote-btn ${
-                              post.voteState === "down"
-                                ? "vote-btn--active"
-                                : ""
+                              post.voteState === "down" ? "vote-btn--active" : ""
                             }`}
-                            onClick={() =>
-                              handlePostVote(post.id, "down")
-                            }
+                            onClick={() => handlePostVote(post.id, "down")}
                           >
                             ▼
                           </button>
@@ -494,9 +375,7 @@ export default function Feed() {
                         <button className="feed-action-btn">
                           💬 {post.comments}
                         </button>
-                        <button className="feed-action-btn">
-                          ↗ Share
-                        </button>
+                        <button className="feed-action-btn">↗ Share</button>
                       </div>
                     </div>
                   </div>
@@ -507,18 +386,13 @@ export default function Feed() {
             {/* Communities sidebar */}
             <aside className="feed-communities">
               <div className="feed-communities-card">
-                <h3 className="feed-communities-title">
-                  POPULAR COMMUNITIES
-                </h3>
+                <h3 className="feed-communities-title">POPULAR COMMUNITIES</h3>
                 <div className="feed-communities-list">
                   {(seeMoreCommunities
                     ? communities
                     : communities.slice(0, 3)
                   ).map((community) => (
-                    <div
-                      key={community.id}
-                      className="feed-community-item"
-                    >
+                    <div key={community.id} className="feed-community-item">
                       <div className="feed-community-avatar"></div>
                       <div className="feed-community-info">
                         <div className="feed-community-name">
@@ -529,14 +403,8 @@ export default function Feed() {
                         </div>
                       </div>
                       <button
-                        className={
-                          community.isJoined
-                            ? "btn-join btn-join--joined"
-                            : "btn-join"
-                        }
-                        onClick={() =>
-                          toggleJoinCommunity(community.id)
-                        }
+                        className={community.isJoined ? "btn-join btn-join--joined" : "btn-join"}
+                        onClick={() => toggleJoinCommunity(community.id)}
                       >
                         {community.isJoined ? "Joined" : "Join"}
                       </button>
@@ -545,9 +413,7 @@ export default function Feed() {
                 </div>
                 <button
                   className="feed-see-more-btn"
-                  onClick={() =>
-                    setSeeMoreCommunities((prev) => !prev)
-                  }
+                  onClick={() => setSeeMoreCommunities((prev) => !prev)}
                 >
                   {seeMoreCommunities ? "Show less" : "See more"}
                 </button>

@@ -1,0 +1,113 @@
+/* App Header */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  height: 56px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ddd;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Center content of the header (search bar) */
+.header-center {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.search-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 500px; /* Adjust this width as needed */
+  border: 1px solid #ddd;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background-color: #fff;
+}
+
+.search-icon {
+  margin-right: 8px;
+  font-size: 16px;
+  color: #888;
+}
+
+.search-bar {
+  flex-grow: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #333;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Create button */
+.header-button {
+  padding: 6px 12px;
+  background-color: #ff4500;
+  color: #fff;
+  border: none;
+  border-radius: 20px; /* Rounded edges for button */
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.header-button:hover {
+  background-color: #e03d00;
+}
+
+/* Icon styles */
+.icon {
+  font-size: 22px; /* Adjusted icon size */
+  position: relative;
+  cursor: pointer;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #ff4500;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+/* Avatar style */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%; /* Circle shape */
+  cursor: pointer;
+}
+
+/* Adjustments for the search bar */
+.search-container {
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.1); /* Light shadow for the search container */
+}
+
+.search-bar::placeholder {
+  color: #aaa; /* Lighter color for the placeholder text */
+}
+
+/* Responsive styles for small screens */
+@media (max-width: 768px) {
+  .header-center {
+    justify-content: flex-start;
+  }
+  .header-right {
+    gap: 8px;
+  }
+}
