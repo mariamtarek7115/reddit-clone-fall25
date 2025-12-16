@@ -3,13 +3,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   padding: 0 16px;
   height: 56px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #ddd;
+
   position: sticky;
   top: 0;
   z-index: 100;
+
+  background-color: var(--card2);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
 }
 
 /* Center content of the header (search bar) */
@@ -19,65 +23,86 @@
   justify-content: center;
 }
 
+/* Search container */
 .search-container {
   display: flex;
   align-items: center;
+  gap: 8px;
+
   width: 100%;
-  max-width: 500px; /* Adjust this width as needed */
-  border: 1px solid #ddd;
+  max-width: 500px;
+
+  border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 4px 12px;
-  background-color: #fff;
+  padding: 6px 12px;
+
+  background-color: var(--bg);
+  box-shadow: var(--shadow);
 }
 
 .search-icon {
-  margin-right: 8px;
   font-size: 16px;
-  color: #888;
+  color: var(--muted);
+  line-height: 1;
 }
 
+/* Search input */
 .search-bar {
   flex-grow: 1;
   border: none;
   outline: none;
+
   font-size: 14px;
-  color: #333;
+  color: var(--text);
+  background: transparent;
 }
 
+.search-bar::placeholder {
+  color: var(--muted);
+}
+
+/* Right side */
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* Create button */
+/* Create button (if you use it) */
 .header-button {
   padding: 6px 12px;
-  background-color: #ff4500;
+  background-color: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 20px; /* Rounded edges for button */
+  border-radius: 20px;
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
 }
 
 .header-button:hover {
-  background-color: #e03d00;
+  filter: brightness(0.95);
 }
 
 /* Icon styles */
 .icon {
-  font-size: 22px; /* Adjusted icon size */
+  font-size: 22px;
   position: relative;
   cursor: pointer;
+  color: var(--muted);
+  line-height: 1;
+  transition: color 0.15s ease;
+}
+
+.icon:hover {
+  color: var(--text);
 }
 
 .notification-badge {
   position: absolute;
   top: -4px;
   right: -4px;
-  background-color: #ff4500;
+  background-color: var(--accent);
   color: #fff;
   font-size: 10px;
   padding: 2px 4px;
@@ -89,17 +114,11 @@
 .user-avatar {
   width: 32px;
   height: 32px;
-  border-radius: 50%; /* Circle shape */
+  border-radius: 50%;
   cursor: pointer;
-}
 
-/* Adjustments for the search bar */
-.search-container {
-  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.1); /* Light shadow for the search container */
-}
-
-.search-bar::placeholder {
-  color: #aaa; /* Lighter color for the placeholder text */
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 
 /* Responsive styles for small screens */
@@ -109,5 +128,8 @@
   }
   .header-right {
     gap: 8px;
+  }
+  .search-container {
+    max-width: 360px;
   }
 }

@@ -1,15 +1,16 @@
-// src/pages/Signup.jsx
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Signup.css";
+import { AuthContext } from "../context/AuthContext";
 
 function Signup() {
-  const [username, setUsername] = useState(""); 
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [dialogMessage, setDialogMessage] = useState(""); // message for dialog
-  const [showDialog, setShowDialog] = useState(false);    // toggle dialog
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
 
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const openDialog = (msg) => {
@@ -23,103 +24,107 @@ function Signup() {
   };
 
   const handleSignup = async () => {
-  if (!username) {
-    openDialog("Username is required");
-    return;
-  }
-  if (!password) {
-    openDialog("Password is required");
-    return;
-  }
+    if (!username) {
+      openDialog("Username is required");
+      return;
+    }
+    if (!password) {
+      openDialog("Password is required");
+      return;
+    }
 
-  // Fixed regex
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
-  if (!passwordRegex.test(password)) {
-    openDialog(
-      "Password must be at least 8 characters and include:\n• lowercase\n• uppercase\n• number\n• special character"
-    );
-    return;
-  }
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
 
-  try {
-    const response = await fetch("http://localhost:5000/user/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password })
-    });
+    if (!passwordRegex.test(password)) {
+      openDialog(
+        "Password must be at least 8 characters and include:\n• lowercase\n• uppercase\n• number\n• special character"
+      );
+      return;
+    }
 
-    const data = await response.json();
+    try {
+      const response = await fetch("http://localhost:5000/user/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-    if (response.ok) {
-      // ✅ Show success message and auto-close
+      const data = await response.json();
+      console.log("Signup response:", data);
+
+      if (!response.ok) {
+        openDialog(data.message || "Signup failed");
+        return;
+      }
+
+      // ✅ store user globally (backend returns { message, user: { _id, username } })
+      login(data.user);
+
+      // ✅ success dialog then redirect
       setDialogMessage("Account created successfully! Redirecting...");
       setShowDialog(true);
-      
-      // Auto-close and navigate after 1.5 seconds
+
       setTimeout(() => {
         setShowDialog(false);
         navigate("/feed");
       }, 1500);
-    } else if (data.message?.includes("E11000") || data.message === "Username already exists") {
-      openDialog("Username already exists. Please choose another username.");
-    } else {
-      openDialog(data.message || "Signup failed");
+    } catch (error) {
+      console.error("Error:", error);
+      openDialog("Something went wrong. Please try again.");
     }
-  } catch (error) {
-    console.error("Error:", error);
-    openDialog("Something went wrong. Please try again.");
-  }
-};
+  };
 
   const isValid = username.trim() && password;
 
   return (
-    <div className="signup_main">
-      <h1>Sign Up</h1>
-      <h2>Create your username and password</h2>
+    <div className="auth-page">
+      <div className="signup_main">
+        <h1>Sign Up</h1>
+        <h2>Create your username and password</h2>
 
-      <p className="intro">
-        Reddit is anonymous, so your username is what you’ll go by here.
-      </p>
+        <p className="intro">
+          Reddit is anonymous, so your username is what you’ll go by here.
+        </p>
 
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <input
+          type="text"
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleSignup} disabled={!isValid}>
-        Continue
-      </button>
+        <button onClick={handleSignup} disabled={!isValid}>
+          Continue
+        </button>
 
-      <p className="ending">
-        Already a Reddit user?{" "}
-        <span className="login_link" onClick={() => navigate("/login")}>
-          Log in
-        </span>
-      </p>
+        <p className="ending">
+          Already a Reddit user?{" "}
+          <span className="login_link" onClick={() => navigate("/login")}>
+            Log in
+          </span>
+        </p>
 
-      {/* 🔥 CUSTOM MODAL DIALOG */}
-      {showDialog && (
-        <div className="dialog_overlay">
-          <div className="dialog_box">
-            <p>{dialogMessage}</p>
-            <button className="dialog_close" onClick={closeDialog}>Close</button>
+        {showDialog && (
+          <div className="dialog_overlay">
+            <div className="dialog_box">
+              <p>{dialogMessage}</p>
+              <button className="dialog_close" onClick={closeDialog}>
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
 
 export default Signup;
-
-

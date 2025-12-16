@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
+import { AuthContext } from "../context/AuthContext";
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -28,12 +31,15 @@ function Login() {
       console.log("Login response:", data);
 
       if (!res.ok) {
-        // backend sends { message: "Invalid username or password" } etc.
         setError(data.message || "Login failed");
         return;
       }
 
-      // ✅ LOGIN SUCCESS → go to feed
+      // ✅ store logged in user globally
+      // backend returns: { message, user: { _id, username } }
+      login(data.user);
+
+      // ✅ go to feed
       navigate("/feed");
     } catch (err) {
       console.error("Login error:", err);
@@ -44,42 +50,44 @@ function Login() {
   const isValid = username.trim() && password;
 
   return (
-    <div className="login_main">
-      <h1>Log In</h1>
-      <h2>Welcome back</h2>
+    <div className="auth-page">
+      <div className="login_main">
+        <h1>Log In</h1>
+        <h2>Welcome back</h2>
 
-      <p className="intro">
-        Enter your username and password to continue to Reddit Clone.
-      </p>
+        <p className="intro">
+          Enter your username and password to continue to Reddit Clone.
+        </p>
 
-      <form onSubmit={handleLogin}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <form onSubmit={handleLogin}>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        {error && <p className="error_text">{error}</p>}
+          {error && <p className="error_text">{error}</p>}
 
-        <button type="submit" disabled={!isValid}>
-          Log In
-        </button>
-      </form>
+          <button type="submit" disabled={!isValid}>
+            Log In
+          </button>
+        </form>
 
-      <p className="ending">
-        New to Reddit Clone?{" "}
-        <span className="signup_link" onClick={() => navigate("/signup")}>
-          Sign up
-        </span>
-      </p>
+        <p className="ending">
+          New to Reddit Clone?{" "}
+          <span className="signup_link" onClick={() => navigate("/signup")}>
+            Sign up
+          </span>
+        </p>
+      </div>
     </div>
   );
 }

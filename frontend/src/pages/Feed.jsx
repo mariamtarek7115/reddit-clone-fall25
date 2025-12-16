@@ -1,6 +1,7 @@
 // src/pages/Feed.jsx
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar/Sidebar.jsx"; // Import Sidebar component
+import Sidebar from "../components/Sidebar/Sidebar.jsx";
+import Header from "../components/Header.jsx";
 import "./Feed.css";
 
 export default function Feed() {
@@ -68,7 +69,6 @@ export default function Feed() {
   ]);
 
   const [joinedFeatured, setJoinedFeatured] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [filteredPosts, setFilteredPosts] = useState(posts);
   const [activeSort, setActiveSort] = useState("Best");
   const [activeLocation, setActiveLocation] = useState("Everywhere");
@@ -77,21 +77,8 @@ export default function Feed() {
   const [sidebarActive, setSidebarActive] = useState("Home");
   const [seeMoreCommunities, setSeeMoreCommunities] = useState(false);
 
-  // suggestions for search bar
-  const [searchSuggestionsOpen, setSearchSuggestionsOpen] = useState(false);
-
   useEffect(() => {
     let list = [...posts];
-
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          (p.subtitle || "").toLowerCase().includes(q) ||
-          p.subreddit.toLowerCase().includes(q)
-      );
-    }
 
     if (activeSort === "Hot") {
       list.sort((a, b) => b.comments - a.comments);
@@ -100,14 +87,11 @@ export default function Feed() {
     } else if (activeSort === "Rising") {
       list.sort((a, b) => a.upvotes - b.upvotes);
     } else {
-      // Best (default)
-      list.sort(
-        (a, b) => b.upvotes + b.comments - (a.upvotes + a.comments)
-      );
+      list.sort((a, b) => b.upvotes + b.comments - (a.upvotes + a.comments));
     }
 
     setFilteredPosts(list);
-  }, [posts, searchQuery, activeSort, activeLocation]);
+  }, [posts, activeSort, activeLocation]);
 
   const formatNumber = (num) => {
     if (num >= 1000) return (num / 1000).toFixed(1) + "K";
@@ -123,18 +107,12 @@ export default function Feed() {
         let newState = voteType;
 
         if (post.voteState === voteType) {
-          // remove vote
-          newUpvotes =
-            voteType === "up" ? post.upvotes - 1 : post.upvotes + 1;
+          newUpvotes = voteType === "up" ? post.upvotes - 1 : post.upvotes + 1;
           newState = null;
         } else if (post.voteState === null) {
-          // add vote
-          newUpvotes =
-            voteType === "up" ? post.upvotes + 1 : post.upvotes - 1;
+          newUpvotes = voteType === "up" ? post.upvotes + 1 : post.upvotes - 1;
         } else {
-          // switch vote
-          newUpvotes =
-            voteType === "up" ? post.upvotes + 2 : post.upvotes - 2;
+          newUpvotes = voteType === "up" ? post.upvotes + 2 : post.upvotes - 2;
         }
 
         return { ...post, upvotes: newUpvotes, voteState: newState };
@@ -144,9 +122,7 @@ export default function Feed() {
 
   const toggleJoinCommunity = (id) => {
     setCommunities((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, isJoined: !c.isJoined } : c
-      )
+      prev.map((c) => (c.id === id ? { ...c, isJoined: !c.isJoined } : c))
     );
   };
 
@@ -154,22 +130,11 @@ export default function Feed() {
     setJoinedFeatured((prev) => !prev);
   };
 
-  const handleSearchChange = (e) => {
-    const v = e.target.value;
-    setSearchQuery(v);
-    setSearchSuggestionsOpen(Boolean(v.trim()));
-  };
-
   const sortOptions = ["Best", "Hot", "New", "Top", "Rising"];
   const locationOptions = ["Everywhere", "Nearby", "Custom"];
 
-  const suggestions = [
-    ...posts.map((p) => p.title),
-    ...communities.map((c) => c.name),
-  ]
-    .filter(Boolean)
-    .slice(0, 8)
-    .filter((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+  // ✅ You can replace this later with real logged-in user data (context/localStorage)
+  const currentUser = { username: "mariam_Ibrahim200" };
 
   return (
     <div className="feed">
@@ -182,46 +147,9 @@ export default function Feed() {
         communities={communities}
       />
 
-      {/* Main content */}
       <main className="feed-main">
-        {/* Header search */}
-        <header className="feed-header">
-          <div className="feed-search-wrapper">
-            <input
-              type="text"
-              className="feed-search-input"
-              placeholder="Search Reddit"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") setSearchSuggestionsOpen(false);
-                if (e.key === "Escape") setSearchSuggestionsOpen(false);
-              }}
-              onFocus={() =>
-                setSearchSuggestionsOpen(Boolean(searchQuery.trim()))
-              }
-              onBlur={() =>
-                setTimeout(() => setSearchSuggestionsOpen(false), 120)
-              }
-            />
-            {searchSuggestionsOpen && suggestions.length > 0 && (
-              <div className="feed-search-suggestions">
-                {suggestions.map((s, i) => (
-                  <div
-                    key={i}
-                    className="feed-search-suggestion-item"
-                    onMouseDown={() => {
-                      setSearchQuery(s);
-                      setSearchSuggestionsOpen(false);
-                    }}
-                  >
-                    {s}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </header>
+        {/* ✅ Shared Header component */}
+        <Header currentUser={currentUser} />
 
         <div className="feed-content">
           <div className="feed-grid">
@@ -232,9 +160,7 @@ export default function Feed() {
                 <div className="feed-filter-wrapper">
                   <button
                     className="feed-filter-btn"
-                    onClick={() =>
-                      setSortDropdownOpen((prev) => !prev)
-                    }
+                    onClick={() => setSortDropdownOpen((prev) => !prev)}
                   >
                     {activeSort} ▼
                   </button>
@@ -261,9 +187,7 @@ export default function Feed() {
                 <div className="feed-filter-wrapper">
                   <button
                     className="feed-filter-btn"
-                    onClick={() =>
-                      setLocDropdownOpen((prev) => !prev)
-                    }
+                    onClick={() => setLocDropdownOpen((prev) => !prev)}
                   >
                     {activeLocation}
                   </button>
@@ -288,23 +212,24 @@ export default function Feed() {
                 </div>
               </div>
 
-              {/* Featured community card */}
+              {/* Featured card */}
               <article className="feed-featured-card">
                 <div className="feed-featured-header">
                   <div className="feed-featured-avatar"></div>
                   <div className="feed-featured-meta">
                     <div className="feed-featured-line">
-                      <span className="feed-featured-subreddit">
-                        r/funny
-                      </span>
+                      <span className="feed-featured-subreddit">r/funny</span>
                       <span className="feed-featured-author">
                         {" "}
                         • Posted by u/SomeUserGM • 3 hours ago
                       </span>
                     </div>
                   </div>
+
                   <button
-                    className={joinedFeatured ? "btn-join btn-join--joined" : "btn-join"}
+                    className={
+                      joinedFeatured ? "btn-join btn-join--joined" : "btn-join"
+                    }
                     onClick={toggleJoinFeatured}
                   >
                     {joinedFeatured ? "Joined" : "Join"}
@@ -317,8 +242,8 @@ export default function Feed() {
                   </h2>
                   <div className="feed-featured-thumbnail">
                     <div className="feed-featured-overlay">
-                      When you realize this is the lady your Mom chose
-                      to name you after 💀💀
+                      When you realize this is the lady your Mom chose to name
+                      you after 💀💀
                     </div>
                   </div>
                 </div>
@@ -336,11 +261,15 @@ export default function Feed() {
                     <div className="feed-post-details">
                       <h3 className="feed-post-title">{post.title}</h3>
                       <p className="feed-post-subtitle">{post.subtitle}</p>
+
                       <div className="feed-post-meta">
-                        <span className="feed-post-subreddit">{post.subreddit}</span>
+                        <span className="feed-post-subreddit">
+                          {post.subreddit}
+                        </span>
                         <span>•</span>
                         <span className="feed-post-author">{post.author}</span>
                       </div>
+
                       <div className="feed-post-actions">
                         <div
                           className={`vote-pill ${
@@ -387,30 +316,36 @@ export default function Feed() {
             <aside className="feed-communities">
               <div className="feed-communities-card">
                 <h3 className="feed-communities-title">POPULAR COMMUNITIES</h3>
+
                 <div className="feed-communities-list">
-                  {(seeMoreCommunities
-                    ? communities
-                    : communities.slice(0, 3)
-                  ).map((community) => (
-                    <div key={community.id} className="feed-community-item">
-                      <div className="feed-community-avatar"></div>
-                      <div className="feed-community-info">
-                        <div className="feed-community-name">
-                          {community.name}
+                  {(seeMoreCommunities ? communities : communities.slice(0, 3)).map(
+                    (community) => (
+                      <div key={community.id} className="feed-community-item">
+                        <div className="feed-community-avatar"></div>
+                        <div className="feed-community-info">
+                          <div className="feed-community-name">
+                            {community.name}
+                          </div>
+                          <div className="feed-community-members">
+                            {community.members} members
+                          </div>
                         </div>
-                        <div className="feed-community-members">
-                          {community.members} members
-                        </div>
+
+                        <button
+                          className={
+                            community.isJoined
+                              ? "btn-join btn-join--joined"
+                              : "btn-join"
+                          }
+                          onClick={() => toggleJoinCommunity(community.id)}
+                        >
+                          {community.isJoined ? "Joined" : "Join"}
+                        </button>
                       </div>
-                      <button
-                        className={community.isJoined ? "btn-join btn-join--joined" : "btn-join"}
-                        onClick={() => toggleJoinCommunity(community.id)}
-                      >
-                        {community.isJoined ? "Joined" : "Join"}
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
+
                 <button
                   className="feed-see-more-btn"
                   onClick={() => setSeeMoreCommunities((prev) => !prev)}
