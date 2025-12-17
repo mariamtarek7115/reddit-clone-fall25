@@ -9,6 +9,7 @@ import CommunityPage from "./pages/CommunityPage";
 import CreateCommunityPage from "./pages/CreateCommunityPage";
 import Profile from "./pages/Profile";
 import PostDetail from "./pages/PostDetail";
+import CreatePost from "./pages/CreatePost";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="/createcommunity" element={<CreateCommunityPage />} />
         <Route path="/profile" element={<Profile />} />
       <Route path="/post/:postId" element={<PostDetail />} />
+      <Route path="/createpost" element={<CreatePost />} />
 
       </Routes>
     </div>
