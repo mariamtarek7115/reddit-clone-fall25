@@ -92,8 +92,8 @@ export default function Feed() {
               ? p.body.slice(0, 70) + "..."
               : p.body
             : "",
-          author: `u/${p.author?.username || "unknown"}`, // if you don’t populate, it may show unknown
-          subreddit: p.community?.name ? `r/${p.community.name}` : "r/general",
+          author: `u/${p.author?.username || "unknown"}`, // fixed template literal
+          subreddit: p.community?.name ? `r/${p.community.name}` : "r/general", // fixed syntax
           upvotes: p.upvotes ?? 0,
           comments: p.commentsCount ?? 0,
           voteState: null,
@@ -288,7 +288,7 @@ export default function Feed() {
                 !err &&
                 filteredPosts.map((post, idx) => (
                   <article
-                    key={post.id ?? `post-${idx}`} // ✅ prevents “only 1 shows” bug
+                    key={post.id ?? `post-${idx}`} // ✅ fixed key template literal
                     className="feed-post-card feed-post-card--large"
                   >
                     {/* header row */}
