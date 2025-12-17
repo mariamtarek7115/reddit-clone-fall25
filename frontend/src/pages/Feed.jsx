@@ -1,13 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar.jsx";
 import Header from "../components/Header.jsx";
 import PostCard from "../components/PostCard.jsx";
+import { AuthContext } from "../context/AuthContext";
 import "./Feed.css";
 
 const API_BASE = "http://localhost:5000";
-const FALLBACK_IMG = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
+const FALLBACK_IMG =
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
 
 export default function Feed() {
+  const { user } = useContext(AuthContext);
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // REAL POSTS (from backend)
@@ -33,16 +37,10 @@ export default function Feed() {
   const sortOptions = ["Best", "Hot", "New", "Top", "Rising"];
   const locationOptions = ["Everywhere", "Nearby", "Custom"];
 
-  // Read logged-in user from localStorage
-  const storedUser = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem("user"));
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const currentUser = { username: storedUser?.username || "guest" };
+  // ✅ ONE source of truth for current user (AuthContext)
+  const currentUser = useMemo(() => {
+    return { username: user?.username || "guest" };
+  }, [user]);
 
   // map sort -> backend sort
   const backendSort = useMemo(() => {
@@ -64,9 +62,9 @@ export default function Feed() {
         console.log("🔍 Fetching from:", url);
 
         const res = await fetch(url);
-        
+
         console.log("📡 Response status:", res.status);
-        
+
         if (!res.ok) {
           const errorText = await res.text();
           console.error("❌ API Error response:", errorText);
@@ -76,41 +74,18 @@ export default function Feed() {
         const data = await res.json();
         console.log("📊 Full API Response:", data);
 
-        // DEBUG: Check what structure we have
-        console.log("🔍 Debugging response structure:");
-        console.log("- Is array?", Array.isArray(data));
-        console.log("- Has 'posts' property?", data.posts !== undefined);
-        console.log("- Posts is array?", Array.isArray(data.posts));
-        console.log("- Posts count:", data.posts ? data.posts.length : 0);
-
         // Extract posts
         let rawPosts = [];
-        
+
         if (Array.isArray(data)) {
           rawPosts = data;
-          console.log("✅ Response is direct array, count:", rawPosts.length);
         } else if (data.posts && Array.isArray(data.posts)) {
           rawPosts = data.posts;
-          console.log("✅ Found posts array in data.posts, count:", rawPosts.length);
         } else if (data.data && Array.isArray(data.data)) {
           rawPosts = data.data;
-          console.log("✅ Found posts array in data.data, count:", rawPosts.length);
         } else {
-          const arrayKeys = Object.keys(data).filter(key => Array.isArray(data[key]));
-          if (arrayKeys.length > 0) {
-            rawPosts = data[arrayKeys[0]];
-            console.log(`✅ Found array in key '${arrayKeys[0]}', count:`, rawPosts.length);
-          } else {
-            console.warn("⚠️ No array found in response, using empty array");
-            rawPosts = [];
-          }
-        }
-
-        console.log(`📝 Final raw posts count: ${rawPosts.length}`);
-
-        // Show first post for debugging
-        if (rawPosts.length > 0) {
-          console.log("📄 First post sample:", rawPosts[0]);
+          const arrayKeys = Object.keys(data).filter((key) => Array.isArray(data[key]));
+          if (arrayKeys.length > 0) rawPosts = data[arrayKeys[0]];
         }
 
         // Convert backend -> UI shape for PostCard component
@@ -131,9 +106,7 @@ export default function Feed() {
           createdAt: p.createdAt,
         }));
 
-        console.log(`🎨 Converted to ${uiPosts.length} UI posts`);
         setPosts(uiPosts);
-
       } catch (e) {
         console.error("🔥 Feed fetch error:", e);
         setErr(e.message || "Something went wrong");
@@ -154,13 +127,14 @@ export default function Feed() {
         const res = await fetch(`${API_BASE}/community`);
         if (res.ok) {
           const data = await res.json();
-          const formattedCommunities = data.communities?.map((community, index) => ({
-            id: community._id || index + 1,
-            name: `r/${community.name}`,
-            members: formatNumber(community.members || 0) + " members",
-            isJoined: false,
-            _id: community._id
-          })) || [];
+          const formattedCommunities =
+            data.communities?.map((community, index) => ({
+              id: community._id || index + 1,
+              name: `r/${community.name}`,
+              members: formatNumber(community.members || 0) + " members",
+              isJoined: false,
+              _id: community._id,
+            })) || [];
           setCommunities(formattedCommunities);
         }
       } catch (error) {
@@ -191,7 +165,12 @@ export default function Feed() {
     } else if (activeSort === "Rising") {
       list.sort((a, b) => b.upvotes - a.upvotes);
     } else if (activeSort === "Best") {
-      list.sort((a, b) => (b.upvotes * 0.7 + b.commentsCount * 0.3) - (a.upvotes * 0.7 + a.commentsCount * 0.3));
+      list.sort(
+        (a, b) =>
+          b.upvotes * 0.7 +
+          b.commentsCount * 0.3 -
+          (a.upvotes * 0.7 + a.commentsCount * 0.3)
+      );
     } else {
       list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
@@ -199,7 +178,7 @@ export default function Feed() {
     return list;
   }, [posts, activeSort]);
 
-  // Voting handler for PostCard
+  // Voting handler for PostCard (local UI only)
   const handlePostVote = async (postId, voteType) => {
     setPosts((prev) =>
       prev.map((post) => {
@@ -262,27 +241,27 @@ export default function Feed() {
 
         <div className="feed-content">
           {/* Test API Button */}
-          <button 
+          <button
             onClick={testApiDirectly}
             style={{
-              position: 'fixed',
-              top: '80px',
-              right: '20px',
+              position: "fixed",
+              top: "80px",
+              right: "20px",
               zIndex: 1000,
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              fontSize: '12px'
+              background: "#3b82f6",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "20px",
+              cursor: "pointer",
+              fontSize: "12px",
             }}
           >
             Test API
           </button>
 
           <div className="feed-grid">
-            {/* Posts Column - REMOVED CREATE POST BAR */}
+            {/* Posts Column */}
             <section className="feed-posts-column">
               {/* Filters */}
               <div className="feed-filter-bar">
@@ -372,7 +351,7 @@ export default function Feed() {
 
                   <div className="feed-featured-body">
                     <h2 className="feed-featured-title">
-                      Welcome to {communities[0]?.name?.replace('r/', '')}
+                      Welcome to {communities[0]?.name?.replace("r/", "")}
                     </h2>
                     <div className="feed-featured-thumbnail">
                       <div className="feed-featured-overlay">
@@ -390,14 +369,11 @@ export default function Feed() {
                   <span>Loading posts...</span>
                 </div>
               )}
-              
+
               {err && (
                 <div className="feed-status feed-status--error">
                   <span>⚠️ {err}</span>
-                  <button 
-                    className="retry-btn" 
-                    onClick={() => window.location.reload()}
-                  >
+                  <button className="retry-btn" onClick={() => window.location.reload()}>
                     Retry
                   </button>
                 </div>
@@ -424,16 +400,16 @@ export default function Feed() {
                   <div className="empty-icon">📭</div>
                   <h3>No posts found</h3>
                   <p>Be the first to create a post!</p>
-                  <button 
+                  <button
                     onClick={testApiDirectly}
                     style={{
-                      background: 'transparent',
-                      border: '1px solid var(--accent)',
-                      color: 'var(--accent)',
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      marginTop: '12px',
-                      cursor: 'pointer'
+                      background: "transparent",
+                      border: "1px solid var(--accent)",
+                      color: "var(--accent)",
+                      padding: "8px 16px",
+                      borderRadius: "20px",
+                      marginTop: "12px",
+                      cursor: "pointer",
                     }}
                   >
                     Test API Connection
@@ -444,9 +420,7 @@ export default function Feed() {
               {/* Load More */}
               {!loading && !err && filteredPosts.length > 0 && (
                 <div className="load-more-container">
-                  <button className="load-more-btn">
-                    Load More Posts
-                  </button>
+                  <button className="load-more-btn">Load More Posts</button>
                 </div>
               )}
             </section>
@@ -456,7 +430,7 @@ export default function Feed() {
               <div className="feed-communities-card">
                 <div className="card-header">
                   <h3 className="feed-communities-title">POPULAR COMMUNITIES</h3>
-                  <button 
+                  <button
                     className="create-community-btn"
                     onClick={() => console.log("Create community clicked")}
                   >
@@ -476,22 +450,16 @@ export default function Feed() {
                         (community) => (
                           <div key={community.id} className="feed-community-item">
                             <div className="feed-community-avatar">
-                              {community.name.charAt(2) || 'R'}
+                              {community.name.charAt(2) || "R"}
                             </div>
                             <div className="feed-community-info">
-                              <div className="feed-community-name">
-                                {community.name}
-                              </div>
-                              <div className="feed-community-members">
-                                {community.members}
-                              </div>
+                              <div className="feed-community-name">{community.name}</div>
+                              <div className="feed-community-members">{community.members}</div>
                             </div>
 
                             <button
                               className={
-                                community.isJoined
-                                  ? "btn-join btn-join--joined"
-                                  : "btn-join"
+                                community.isJoined ? "btn-join btn-join--joined" : "btn-join"
                               }
                               onClick={() => toggleJoinCommunity(community.id)}
                             >
@@ -529,9 +497,7 @@ export default function Feed() {
                 <a href="/content-policy">Content Policy</a>
                 <a href="/privacy-policy">Privacy Policy</a>
                 <a href="/user-agreement">User Agreement</a>
-                <div className="copyright">
-                  © 2024 Reddit Clone. All rights reserved.
-                </div>
+                <div className="copyright">© 2024 Reddit Clone. All rights reserved.</div>
               </div>
             </aside>
           </div>

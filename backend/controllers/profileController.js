@@ -57,10 +57,10 @@ exports.getUserComments = async (req, res) => {
 
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ message: "User not found" });
-
-    const comments = await Comment.find({ author: user._id, isDeleted: false })
-      .populate("post", "title")
-      .sort({ createdAt: -1 });
+const comments = await Comment.find({ author: user._id })
+  .populate("author", "username")
+  .populate("post", "title")
+  .sort({ createdAt: -1 });
 
     res.json({ comments });
   } catch (err) {

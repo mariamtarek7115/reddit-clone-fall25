@@ -113,9 +113,16 @@ exports.updateComment = async (req, res) => {
 exports.deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
+    const { userId } = req.query;
+
+    if (!userId) return res.status(400).json({ message: "userId required" });
 
     const comment = await Comment.findById(commentId);
     if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+    if (String(comment.author) !== String(userId)) {
+      return res.status(403).json({ message: "Not allowed to delete this comment" });
+    }
 
     if (comment.isDeleted) return res.json({ message: "Already deleted" });
 
@@ -123,10 +130,9 @@ exports.deleteComment = async (req, res) => {
     comment.body = "[deleted]";
     await comment.save();
 
-    // Decrement post count
     await Post.findByIdAndUpdate(comment.post, { $inc: { commentsCount: -1 } });
 
-    res.json({ message: "Comment deleted" });
+    res.json({ message: "Comment deleted", comment });
   } catch (err) {
     res.status(500).json({ message: err.message || "Failed to delete comment" });
   }

@@ -1,8 +1,13 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import Sidebar from "../components/Sidebar/Sidebar";
-import Header from "../components/Header";
-import PostCard from "../components/PostCard";
+
+import Sidebar from "../components/Sidebar/Sidebar.jsx";
+import Header from "../components/Header.jsx";
+import PostCard from "../components/PostCard.jsx";
+
+import CommentForm from "../components/Comment/CommentForm.jsx";
+import CommentList from "../components/Comment/CommentList.jsx";
+
 import { AuthContext } from "../context/AuthContext";
 import "./PostDetail.css";
 
@@ -12,38 +17,44 @@ export default function PostDetail() {
   const { postId } = useParams();
   const { user } = useContext(AuthContext);
 
+  const currentUserId = user?._id || null;
+  const currentUsername = user?.username || null;
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sidebarActive, setSidebarActive] = useState("Home");
+
   const [communities] = useState([
     { id: 1, name: "r/JavaScript" },
     { id: 2, name: "r/ReactJS" },
   ]);
 
+  const toggleJoinCommunity = (id) => console.log("Join/Leave community:", id);
+
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
+
   const [loadingPost, setLoadingPost] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [err, setErr] = useState("");
-
-  const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const username = user?.username;
-
-  // Fetch post
+  // -------- Fetch Post --------
   useEffect(() => {
+    if (!postId) return;
+
     const fetchPost = async () => {
       setLoadingPost(true);
-      setErr("");
+      setError("");
+
       try {
         const res = await fetch(`${API_BASE}/posts/${postId}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Failed to load post");
 
-        // your backend may return {post} or the post directly
         setPost(data.post || data);
       } catch (e) {
-        setErr(e.message || "Failed to load post");
+        setError(e.message || "Failed to load post");
+        setPost(null);
       } finally {
         setLoadingPost(false);
       }
@@ -52,17 +63,22 @@ export default function PostDetail() {
     fetchPost();
   }, [postId]);
 
-  // Fetch top-level comments
+  // -------- Fetch Comments --------
   const fetchComments = async () => {
+    if (!postId) return;
+
     setLoadingComments(true);
-    setErr("");
+    setError("");
+
     try {
       const res = await fetch(`${API_BASE}/comments/post/${postId}?parent=null`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to load comments");
+
       setComments(data.comments || []);
     } catch (e) {
-      setErr(e.message || "Failed to load comments");
+      setError(e.message || "Failed to load comments");
+      setComments([]);
     } finally {
       setLoadingComments(false);
     }
@@ -73,20 +89,15 @@ export default function PostDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
-  const toggleJoinCommunity = (id) => console.log("Join/Leave community:", id);
-
-  // Submit comment
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
-
-    if (!username) {
-      setErr("You must be logged in to comment.");
+  // -------- Create Comment (use userId!) --------
+  const createComment = async (text) => {
+    if (!currentUserId) {
+      setError("You must be logged in to comment.");
       return;
     }
 
     setSubmitting(true);
-    setErr("");
+    setError("");
 
     try {
       const res = await fetch(`${API_BASE}/comments`, {
@@ -94,40 +105,73 @@ export default function PostDetail() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           postId,
-          username,
-          body: newComment.trim(),
+          userId: currentUserId,     // ✅ use ID
+          body: text,
           parentComment: null,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create comment");
+      if (!res.ok) throw new Error(data.message || "Failed to post comment");
 
-      // Prepend new comment
       setComments((prev) => [data.comment, ...prev]);
-      setNewComment("");
 
-      // Optional: update post comment count locally
       setPost((prev) =>
         prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev
       );
     } catch (e) {
-      setErr(e.message || "Failed to create comment");
+      setError(e.message || "Failed to post comment");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Your PostCard expects some fields sometimes; we can pass through safely.
+  // -------- Delete Comment (author-only via userId) --------
+  const deleteComment = async (commentId) => {
+    if (!currentUserId) return;
+
+    const ok = window.confirm("Delete this comment?");
+    if (!ok) return;
+
+    setError("");
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/comments/${commentId}?userId=${encodeURIComponent(currentUserId)}`,
+        { method: "DELETE" }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to delete comment");
+
+      // soft-delete in UI
+      setComments((prev) =>
+        prev.map((c) =>
+          c._id === commentId ? { ...c, isDeleted: true, body: "[deleted]" } : c
+        )
+      );
+
+      setPost((prev) =>
+        prev
+          ? { ...prev, commentsCount: Math.max(0, (prev.commentsCount || 0) - 1) }
+          : prev
+      );
+    } catch (e) {
+      setError(e.message || "Failed to delete comment");
+    }
+  };
+
+  // Normalize post for PostCard
   const postForCard = useMemo(() => {
     if (!post) return null;
+
     return {
       ...post,
       id: post._id,
       subreddit: post.community?.name ? `r/${post.community.name}` : "r/general",
+      body: post.body || post.content || post.text || "",
       mediaUrl: post.mediaUrl,
       image: post.mediaUrl,
-      body: post.body || post.content || post.text || "",
     };
   }, [post]);
 
@@ -143,10 +187,10 @@ export default function PostDetail() {
       />
 
       <main className="postdetail-main">
-        <Header />
+        <Header currentUser={{ username: currentUsername || "guest" }} />
 
         <div className="postdetail-content">
-          {err && <div className="postdetail-error">⚠️ {err}</div>}
+          {error && <div className="postdetail-error">⚠️ {error}</div>}
 
           {loadingPost ? (
             <div className="postdetail-loading">Loading post...</div>
@@ -156,63 +200,24 @@ export default function PostDetail() {
             <div className="postdetail-empty">Post not found.</div>
           )}
 
-          {/* Comment form */}
-          <section className="comment-box">
-            <h3>Comment</h3>
-            <form onSubmit={handleSubmit}>
-              <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder={username ? "Write a comment..." : "Log in to comment"}
-                disabled={!username || submitting}
-                rows={4}
-              />
-              <div className="comment-actions">
-                <button type="submit" disabled={!username || submitting || !newComment.trim()}>
-                  {submitting ? "Posting..." : "Post Comment"}
-                </button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => setNewComment("")}
-                  disabled={submitting}
-                >
-                  Clear
-                </button>
-              </div>
-            </form>
-          </section>
+          <CommentForm disabled={!currentUserId || submitting} onSubmit={createComment} />
 
-          {/* Comments list */}
-          <section className="comments-section">
-            <div className="comments-header">
-              <h3>Comments</h3>
-              <button onClick={fetchComments} disabled={loadingComments}>
-                {loadingComments ? "Refreshing..." : "Refresh"}
-              </button>
-            </div>
+          <div className="comments-header">
+            <h3>Comments</h3>
+            <button onClick={fetchComments} disabled={loadingComments}>
+              {loadingComments ? "Refreshing..." : "Refresh"}
+            </button>
+          </div>
 
-            {loadingComments ? (
-              <div className="postdetail-loading">Loading comments...</div>
-            ) : comments.length === 0 ? (
-              <div className="postdetail-empty">No comments yet.</div>
-            ) : (
-              <div className="comments-list">
-                {comments.map((c) => (
-                  <div key={c._id} className="comment-card">
-                    <div className="comment-meta">
-                      <span className="comment-author">u/{c.author?.username || "unknown"}</span>
-                      <span className="dot">•</span>
-                      <span className="comment-time">
-                        {c.createdAt ? new Date(c.createdAt).toLocaleString() : ""}
-                      </span>
-                    </div>
-                    <div className="comment-body">{c.body}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          {loadingComments ? (
+            <div className="postdetail-loading">Loading comments...</div>
+          ) : (
+            <CommentList
+              comments={comments}
+              currentUsername={currentUsername}
+              onDelete={deleteComment}
+            />
+          )}
         </div>
       </main>
     </div>

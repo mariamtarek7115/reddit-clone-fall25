@@ -290,7 +290,7 @@ const Profile = () => {
                             </span>
                           </div>
                           <div className="comment-body">
-                            <p>{comment.content}</p>
+                           <p>{comment.body}</p>
                           </div>
                           <div className="comment-actions">
                             <button className="comment-action-btn">
