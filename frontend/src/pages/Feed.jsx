@@ -1,65 +1,21 @@
-// src/pages/Feed.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar.jsx";
 import Header from "../components/Header.jsx";
 import "./Feed.css";
 
+const API_BASE = "http://localhost:5000";
+const FALLBACK_IMG =
+  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
+
 export default function Feed() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // POSTS data
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      title: "Indigenous star held by ICE",
-      subtitle: "Lest we Forget: How Indigenous Amer...",
-      author: "u/thatsnotha",
-      subreddit: "r/news",
-      upvotes: 26000,
-      comments: 420,
-      voteState: null,
-      image:
-        "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=250&fit=crop",
-    },
-    {
-      id: 2,
-      title: "Tim Walz responds to Trump",
-      subtitle: "Tim Walz responds to Donald Trump cal...",
-      author: "u/politics",
-      subreddit: "r/politics",
-      upvotes: 45000,
-      comments: 1203,
-      voteState: null,
-      image:
-        "https://images.unsplash.com/photo-1591117207239-788bf8de6c3b?w=400&h=250&fit=crop",
-    },
-    {
-      id: 3,
-      title: "Kim Kardashian's brain scan",
-      subtitle: "Kim Kardashian Learns She Has 'GAD, Br...",
-      author: "u/entertainment",
-      subreddit: "r/entertainment",
-      upvotes: 12000,
-      comments: 856,
-      voteState: null,
-      image:
-        "https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=400&h=250&fit=crop",
-    },
-    {
-      id: 4,
-      title: "Trump's Ukraine pos",
-      subtitle: "Biograph/Trump proposes t",
-      author: "u/worldnews",
-      subreddit: "r/worldnews",
-      upvotes: 89000,
-      comments: 2341,
-      voteState: null,
-      image:
-        "https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=400&h=250&fit=crop",
-    },
-  ]);
+  // REAL POSTS (from backend)
+  const [posts, setPosts] = useState([]); // UI-ready posts
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
-  // COMMUNITIES
+  // COMMUNITIES (still dummy for now)
   const [communities, setCommunities] = useState([
     { id: 1, name: "r/AskReddit", members: "45.2M", isJoined: false },
     { id: 2, name: "r/leagueoflegends", members: "6.8M", isJoined: false },
@@ -69,7 +25,8 @@ export default function Feed() {
   ]);
 
   const [joinedFeatured, setJoinedFeatured] = useState(false);
-  const [filteredPosts, setFilteredPosts] = useState(posts);
+
+  // UI state
   const [activeSort, setActiveSort] = useState("Best");
   const [activeLocation, setActiveLocation] = useState("Everywhere");
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
@@ -77,7 +34,88 @@ export default function Feed() {
   const [sidebarActive, setSidebarActive] = useState("Home");
   const [seeMoreCommunities, setSeeMoreCommunities] = useState(false);
 
+  const sortOptions = ["Best", "Hot", "New", "Top", "Rising"];
+  const locationOptions = ["Everywhere", "Nearby", "Custom"];
+
+  // Read logged-in user from localStorage (works even without AuthContext)
+  const storedUser = useMemo(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const currentUser = { username: storedUser?.username || "guest" };
+
+  const formatNumber = (num) => {
+    const n = Number(num) || 0;
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+    return n;
+  };
+
+  // map sort -> backend sort (if your backend ignores query, it's ok)
+  const backendSort = useMemo(() => {
+    if (activeSort === "New") return "new";
+    if (activeSort === "Top") return "top";
+    if (activeSort === "Hot") return "hot";
+    // Best/Rising: we’ll sort locally
+    return "new";
+  }, [activeSort]);
+
+  // ✅ Fetch posts from backend
   useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      setErr("");
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/posts?sort=${backendSort}&page=1&limit=50`
+        );
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || "Failed to load posts");
+
+        // Support different response shapes:
+        const rawPosts = Array.isArray(data)
+          ? data
+          : data.posts || data.data || [];
+
+        // Convert backend -> UI shape
+        const uiPosts = rawPosts.map((p) => ({
+          id: p._id, // IMPORTANT for unique keys
+          title: p.title || "(No title)",
+          body: p.body || "",
+          subtitle: p.body
+            ? p.body.length > 70
+              ? p.body.slice(0, 70) + "..."
+              : p.body
+            : "",
+          author: `u/${p.author?.username || "unknown"}`, // if you don’t populate, it may show unknown
+          subreddit: p.community?.name ? `r/${p.community.name}` : "r/general",
+          upvotes: p.upvotes ?? 0,
+          comments: p.commentsCount ?? 0,
+          voteState: null,
+          image: p.mediaUrl || FALLBACK_IMG,
+          createdAt: p.createdAt,
+        }));
+
+        setPosts(uiPosts);
+      } catch (e) {
+        console.error("Feed fetch error:", e);
+        setErr(e.message || "Something went wrong");
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [backendSort]);
+
+  // local sorting (keeps your old behavior)
+  const filteredPosts = useMemo(() => {
     let list = [...posts];
 
     if (activeSort === "Hot") {
@@ -87,17 +125,14 @@ export default function Feed() {
     } else if (activeSort === "Rising") {
       list.sort((a, b) => a.upvotes - b.upvotes);
     } else {
+      // Best
       list.sort((a, b) => b.upvotes + b.comments - (a.upvotes + a.comments));
     }
 
-    setFilteredPosts(list);
+    return list;
   }, [posts, activeSort, activeLocation]);
 
-  const formatNumber = (num) => {
-    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
-    return num;
-  };
-
+  // Voting pill (frontend-only for now)
   const handlePostVote = (postId, voteType) => {
     setPosts((prev) =>
       prev.map((post) => {
@@ -130,12 +165,6 @@ export default function Feed() {
     setJoinedFeatured((prev) => !prev);
   };
 
-  const sortOptions = ["Best", "Hot", "New", "Top", "Rising"];
-  const locationOptions = ["Everywhere", "Nearby", "Custom"];
-
-  // ✅ You can replace this later with real logged-in user data (context/localStorage)
-  const currentUser = { username: "mariam_Ibrahim200" };
-
   return (
     <div className="feed">
       <Sidebar
@@ -148,7 +177,6 @@ export default function Feed() {
       />
 
       <main className="feed-main">
-        {/* ✅ Shared Header component */}
         <Header currentUser={currentUser} />
 
         <div className="feed-content">
@@ -164,6 +192,7 @@ export default function Feed() {
                   >
                     {activeSort} ▼
                   </button>
+
                   {sortDropdownOpen && (
                     <div className="feed-dropdown">
                       {sortOptions.map((opt) => (
@@ -191,6 +220,7 @@ export default function Feed() {
                   >
                     {activeLocation}
                   </button>
+
                   {locDropdownOpen && (
                     <div className="feed-dropdown">
                       {locationOptions.map((opt) => (
@@ -249,67 +279,86 @@ export default function Feed() {
                 </div>
               </article>
 
-              {/* Posts */}
-              {filteredPosts.map((post) => (
-                <article key={post.id} className="feed-post-card">
-                  <div className="feed-post-layout">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="feed-post-thumbnail"
-                    />
-                    <div className="feed-post-details">
-                      <h3 className="feed-post-title">{post.title}</h3>
-                      <p className="feed-post-subtitle">{post.subtitle}</p>
+              {/* Loading / Error */}
+              {loading && <div className="feed-status">Loading posts…</div>}
+              {err && <div className="feed-status feed-status--error">{err}</div>}
 
-                      <div className="feed-post-meta">
-                        <span className="feed-post-subreddit">
-                          {post.subreddit}
-                        </span>
-                        <span>•</span>
+              {/* Posts (Reddit-like layout) */}
+              {!loading &&
+                !err &&
+                filteredPosts.map((post, idx) => (
+                  <article
+                    key={post.id ?? `post-${idx}`} // ✅ prevents “only 1 shows” bug
+                    className="feed-post-card feed-post-card--large"
+                  >
+                    {/* header row */}
+                    <div className="feed-post-header">
+                      <div className="feed-post-header-left">
+                        <span className="feed-post-subreddit">{post.subreddit}</span>
+                        <span className="feed-post-dot">•</span>
                         <span className="feed-post-author">{post.author}</span>
                       </div>
-
-                      <div className="feed-post-actions">
-                        <div
-                          className={`vote-pill ${
-                            post.voteState === "up"
-                              ? "vote-pill--up"
-                              : post.voteState === "down"
-                              ? "vote-pill--down"
-                              : ""
-                          }`}
-                        >
-                          <button
-                            className={`vote-btn ${
-                              post.voteState === "up" ? "vote-btn--active" : ""
-                            }`}
-                            onClick={() => handlePostVote(post.id, "up")}
-                          >
-                            ▲
-                          </button>
-                          <span className="vote-count">
-                            {formatNumber(post.upvotes)}
-                          </span>
-                          <button
-                            className={`vote-btn ${
-                              post.voteState === "down" ? "vote-btn--active" : ""
-                            }`}
-                            onClick={() => handlePostVote(post.id, "down")}
-                          >
-                            ▼
-                          </button>
-                        </div>
-
-                        <button className="feed-action-btn">
-                          💬 {post.comments}
-                        </button>
-                        <button className="feed-action-btn">↗ Share</button>
-                      </div>
+                      <button className="feed-post-more" title="More">
+                        •••
+                      </button>
                     </div>
-                  </div>
-                </article>
-              ))}
+
+                    {/* title */}
+                    <h3 className="feed-post-title">{post.title}</h3>
+
+                    {/* body preview */}
+                    {post.subtitle && (
+                      <p className="feed-post-subtitle">{post.subtitle}</p>
+                    )}
+
+                    {/* big media */}
+                    <div className="feed-post-media">
+                      <img src={post.image} alt={post.title} />
+                    </div>
+
+                    {/* actions */}
+                    <div className="feed-post-actions">
+                      <div
+                        className={`vote-pill ${
+                          post.voteState === "up"
+                            ? "vote-pill--up"
+                            : post.voteState === "down"
+                            ? "vote-pill--down"
+                            : ""
+                        }`}
+                      >
+                        <button
+                          className={`vote-btn ${
+                            post.voteState === "up" ? "vote-btn--active" : ""
+                          }`}
+                          onClick={() => handlePostVote(post.id, "up")}
+                        >
+                          ▲
+                        </button>
+                        <span className="vote-count">
+                          {formatNumber(post.upvotes)}
+                        </span>
+                        <button
+                          className={`vote-btn ${
+                            post.voteState === "down" ? "vote-btn--active" : ""
+                          }`}
+                          onClick={() => handlePostVote(post.id, "down")}
+                        >
+                          ▼
+                        </button>
+                      </div>
+
+                      <button className="feed-action-btn">
+                        💬 {post.comments}
+                      </button>
+                      <button className="feed-action-btn">↗ Share</button>
+                    </div>
+                  </article>
+                ))}
+
+              {!loading && !err && filteredPosts.length === 0 && (
+                <div className="feed-status">No posts yet.</div>
+              )}
             </section>
 
             {/* Communities sidebar */}

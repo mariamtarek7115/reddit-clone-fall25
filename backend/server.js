@@ -22,6 +22,9 @@ mongoose.connect("mongodb://localhost:27017/redditClone")
 // Connect to MongoDB
 // Use the users router
 app.use("/user", usersRoute);
+app.use("/profile", require("./routes/profileRoute"));
+app.use("/posts", require("./routes/postRoute"));
+
 
 
 // Start server
