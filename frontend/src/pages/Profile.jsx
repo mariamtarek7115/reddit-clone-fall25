@@ -2,13 +2,15 @@ import React, { useContext, useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar";
 import Header from "../components/Header";
 import NavigationMenu from "../components/NavigationMenu";
+import PostCard from "../components/PostCard";
 import { AuthContext } from "../context/AuthContext";
+import "./Profile.css"; 
 
 const API_BASE = "http://localhost:5000";
 
 const Profile = () => {
-  const { user } = useContext(AuthContext); // ✅ logged-in user from login/signup
-  const username = user?.username; // e.g. mariam_Ibrahim200
+  const { user } = useContext(AuthContext);
+  const username = user?.username;
 
   const [sidebarActive, setSidebarActive] = useState("Home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -16,7 +18,7 @@ const Profile = () => {
   // Tabs
   const [activeTab, setActiveTab] = useState("Overview");
 
-  // Sidebar dummy communities (keep for now)
+  // Sidebar dummy communities
   const [communities, setCommunities] = useState([
     { id: 1, name: "r/JavaScript" },
     { id: 2, name: "r/ReactJS" },
@@ -40,9 +42,35 @@ const Profile = () => {
     setActiveTab(tab);
   };
 
+  // Handle voting in profile (update local state)
+  const handleVote = (postId, voteType) => {
+    // Update posts in the current tab
+    if (activeTab === "Posts") {
+      setPosts(prev => prev.map(post => {
+        if (post._id === postId || post.id === postId) {
+          let newUpvotes = post.upvotes || 0;
+          let newState = voteType;
+          
+          if (post.voteState === voteType) {
+            newUpvotes = voteType === "up" ? newUpvotes - 1 : newUpvotes + 1;
+            newState = null;
+          } else if (post.voteState === null) {
+            newUpvotes = voteType === "up" ? newUpvotes + 1 : newUpvotes - 1;
+          } else {
+            newUpvotes = voteType === "up" ? newUpvotes + 2 : newUpvotes - 2;
+          }
+          
+          return { ...post, upvotes: newUpvotes, voteState: newState };
+        }
+        return post;
+      }));
+    }
+    // Similarly handle upvoted/downvoted posts
+  };
+
   // Fetch based on tab
   useEffect(() => {
-    if (!username) return; // protected routes should prevent this, but safe guard
+    if (!username) return;
 
     const fetchTabData = async () => {
       setLoading(true);
@@ -50,10 +78,19 @@ const Profile = () => {
 
       try {
         if (activeTab === "Overview") {
-          const res = await fetch(`${API_BASE}/profile/${username}/overview`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || "Failed to load overview");
-          setOverview(data);
+          const [overviewRes, postsRes] = await Promise.all([
+            fetch(`${API_BASE}/profile/${username}/overview`),
+            fetch(`${API_BASE}/profile/${username}/posts`)
+          ]);
+          
+          const overviewData = await overviewRes.json();
+          const postsData = await postsRes.json();
+          
+          if (!overviewRes.ok) throw new Error(overviewData.message || "Failed to load overview");
+          if (!postsRes.ok) throw new Error(postsData.message || "Failed to load posts");
+          
+          setOverview(overviewData);
+          setPosts(postsData.posts?.slice(0, 3) || []);
         }
 
         if (activeTab === "Posts") {
@@ -94,7 +131,7 @@ const Profile = () => {
   }, [activeTab, username]);
 
   return (
-    <div className="profile-page" style={{ display: "flex", flexDirection: "row", height: "100vh" }}>
+    <div className="profile-page">
       {/* Sidebar */}
       <Sidebar
         sidebarActive={sidebarActive}
@@ -105,123 +142,215 @@ const Profile = () => {
         communities={communities}
       />
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        {/* Header (your Header now reads AuthContext itself, so no need to pass currentUser) */}
+      <div className="profile-main">
+        {/* Header */}
         <Header />
 
+        {/* Profile Header */}
+        <div className="profile-header">
+          <div className="profile-banner"></div>
+          <div className="profile-info">
+            <div className="profile-avatar"></div>
+            <div className="profile-details">
+              <h1 className="profile-username">u/{username}</h1>
+              <div className="profile-stats">
+                <span className="profile-stat">
+                  <strong>{overview?.stats?.postsCount || 0}</strong> Posts
+                </span>
+                <span className="profile-stat">
+                  <strong>{overview?.stats?.commentsCount || 0}</strong> Comments
+                </span>
+                <span className="profile-stat">
+                  <strong>{overview?.stats?.karma || 0}</strong> Karma
+                </span>
+              </div>
+              {overview?.user?.bio && (
+                <p className="profile-bio">{overview.user.bio}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Navigation Menu */}
-        <NavigationMenu onTabChange={handleTabChange} />
+        <NavigationMenu onTabChange={handleTabChange} activeTab={activeTab} />
 
         {/* Tab Content */}
-        <div className="tab-content" style={{ padding: "20px" }}>
-          {loading && <div>Loading...</div>}
-          {error && <div style={{ color: "red" }}>{error}</div>}
+        <div className="profile-content">
+          {loading && (
+            <div className="profile-loading">
+              <div className="loading-spinner"></div>
+              <p>Loading...</p>
+            </div>
+          )}
+          
+          {error && (
+            <div className="profile-error">
+              <p>Error: {error}</p>
+            </div>
+          )}
 
           {!loading && !error && (
             <>
+              {/* Overview Tab */}
               {activeTab === "Overview" && (
-                <div>
-                  <h3>u/{overview?.user?.username}</h3>
-                  <p>Bio: {overview?.user?.bio || "No bio yet"}</p>
-                  <p>Posts: {overview?.stats?.postsCount ?? 0}</p>
-                  <p>Comments: {overview?.stats?.commentsCount ?? 0}</p>
+                <div className="tab-overview">
+                  {/* Recent Posts Preview */}
+                  <div className="overview-section">
+                    <h2 className="section-title">Recent Posts</h2>
+                    {posts.length === 0 ? (
+                      <div className="empty-state">
+                        <p>No posts yet.</p>
+                      </div>
+                    ) : (
+                      <div className="posts-grid">
+                        {posts.map((post) => (
+                          <PostCard
+                            key={post._id}
+                            post={post}
+                            onVote={handleVote}
+                            showCommunity={true}
+                            showFullContent={false}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Profile Info */}
+                  <div className="overview-section">
+                    <h2 className="section-title">Profile Information</h2>
+                    <div className="profile-info-card">
+                      <div className="info-item">
+                        <span className="info-label">Member since:</span>
+                        <span className="info-value">
+                          {overview?.user?.createdAt 
+                            ? new Date(overview.user.createdAt).toLocaleDateString()
+                            : "N/A"}
+                        </span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Karma:</span>
+                        <span className="info-value">{overview?.stats?.karma || 0}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Post Karma:</span>
+                        <span className="info-value">{overview?.stats?.postKarma || 0}</span>
+                      </div>
+                      <div className="info-item">
+                        <span className="info-label">Comment Karma:</span>
+                        <span className="info-value">{overview?.stats?.commentKarma || 0}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
+              {/* Posts Tab */}
               {activeTab === "Posts" && (
-                <div>
+                <div className="tab-posts">
                   {posts.length === 0 ? (
-                    <div>No posts yet.</div>
+                    <div className="empty-state">
+                      <p>No posts yet.</p>
+                      <button className="create-post-btn">Create your first post</button>
+                    </div>
                   ) : (
-                    posts.map((p) => (
-                      <div key={p._id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ fontWeight: 700 }}>{p.title}</div>
-                        <div style={{ color: "#777", fontSize: 13 }}>
-                          r/{p.community?.name || "unknown"} • {new Date(p.createdAt).toLocaleString()}
-                        </div>
-                      </div>
-                    ))
+                    <div className="posts-list">
+                      {posts.map((post) => (
+                        <PostCard
+                          key={post._id}
+                          post={post}
+                          onVote={handleVote}
+                          showCommunity={true}
+                          showFullContent={true}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
 
+              {/* Comments Tab */}
               {activeTab === "Comments" && (
-                <div>
+                <div className="tab-comments">
                   {comments.length === 0 ? (
-                    <div>No comments yet.</div>
+                    <div className="empty-state">
+                      <p>No comments yet.</p>
+                    </div>
                   ) : (
-                    comments.map((c) => (
-                      <div key={c._id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ fontWeight: 600 }}>{c.content}</div>
-                        <div style={{ color: "#777", fontSize: 13 }}>
-                          on: {c.post?.title || "Unknown post"} • {new Date(c.createdAt).toLocaleString()}
+                    <div className="comments-list">
+                      {comments.map((comment) => (
+                        <div key={comment._id} className="comment-card">
+                          <div className="comment-header">
+                            <span className="comment-author">u/{comment.author?.username}</span>
+                            <span className="comment-time">
+                              • {new Date(comment.createdAt).toLocaleDateString()}
+                            </span>
+                            <span className="comment-on">
+                              • on <strong>{comment.post?.title || "Unknown post"}</strong>
+                            </span>
+                          </div>
+                          <div className="comment-body">
+                            <p>{comment.content}</p>
+                          </div>
+                          <div className="comment-actions">
+                            <button className="comment-action-btn">
+                              <span>▲</span>
+                              <span>{comment.upvotes || 0}</span>
+                            </button>
+                            <button className="comment-action-btn">
+                              <span>▼</span>
+                            </button>
+                            <button className="comment-action-btn">💬 Reply</button>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
 
+              {/* Upvoted Tab */}
               {activeTab === "Upvoted" && (
-                <div>
-                  <h4>Upvoted Posts</h4>
+                <div className="tab-upvoted">
                   {upvoted.posts.length === 0 ? (
-                    <div>No upvoted posts.</div>
+                    <div className="empty-state">
+                      <p>No upvoted posts yet.</p>
+                    </div>
                   ) : (
-                    upvoted.posts.map((p) => (
-                      <div key={p._id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ fontWeight: 700 }}>{p.title}</div>
-                        <div style={{ color: "#777", fontSize: 13 }}>
-                          r/{p.community?.name || "unknown"}
-                        </div>
-                      </div>
-                    ))
-                  )}
-
-                  <h4 style={{ marginTop: 20 }}>Upvoted Comments</h4>
-                  {upvoted.comments.length === 0 ? (
-                    <div>No upvoted comments.</div>
-                  ) : (
-                    upvoted.comments.map((c) => (
-                      <div key={c._id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ fontWeight: 600 }}>{c.content}</div>
-                        <div style={{ color: "#777", fontSize: 13 }}>
-                          on: {c.post?.title || "Unknown post"}
-                        </div>
-                      </div>
-                    ))
+                    <div className="posts-list">
+                      {upvoted.posts.map((post) => (
+                        <PostCard
+                          key={post._id}
+                          post={post}
+                          onVote={handleVote}
+                          showCommunity={true}
+                          showFullContent={false}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               )}
 
+              {/* Downvoted Tab */}
               {activeTab === "Downvoted" && (
-                <div>
-                  <h4>Downvoted Posts</h4>
+                <div className="tab-downvoted">
                   {downvoted.posts.length === 0 ? (
-                    <div>No downvoted posts.</div>
+                    <div className="empty-state">
+                      <p>No downvoted posts yet.</p>
+                    </div>
                   ) : (
-                    downvoted.posts.map((p) => (
-                      <div key={p._id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ fontWeight: 700 }}>{p.title}</div>
-                        <div style={{ color: "#777", fontSize: 13 }}>
-                          r/{p.community?.name || "unknown"}
-                        </div>
-                      </div>
-                    ))
-                  )}
-
-                  <h4 style={{ marginTop: 20 }}>Downvoted Comments</h4>
-                  {downvoted.comments.length === 0 ? (
-                    <div>No downvoted comments.</div>
-                  ) : (
-                    downvoted.comments.map((c) => (
-                      <div key={c._id} style={{ padding: "12px 0", borderBottom: "1px solid #eee" }}>
-                        <div style={{ fontWeight: 600 }}>{c.content}</div>
-                        <div style={{ color: "#777", fontSize: 13 }}>
-                          on: {c.post?.title || "Unknown post"}
-                        </div>
-                      </div>
-                    ))
+                    <div className="posts-list">
+                      {downvoted.posts.map((post) => (
+                        <PostCard
+                          key={post._id}
+                          post={post}
+                          onVote={handleVote}
+                          showCommunity={true}
+                          showFullContent={false}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
               )}

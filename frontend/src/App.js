@@ -8,6 +8,7 @@ import Feed from "./pages/Feed";
 import CommunityPage from "./pages/CommunityPage";
 import CreateCommunityPage from "./pages/CreateCommunityPage";
 import Profile from "./pages/Profile";
+import PostDetail from "./pages/PostDetail";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/community/:communityName" element={<CommunityPage />} />
         <Route path="/createcommunity" element={<CreateCommunityPage />} />
         <Route path="/profile" element={<Profile />} />
+      <Route path="/post/:postId" element={<PostDetail />} />
 
       </Routes>
     </div>

@@ -16,15 +16,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
-mongoose.connect("mongodb://localhost:27017/redditClone")
+mongoose.connect(
+  "mongodb+srv://mariamtarek7144:Test123@cluster0.y8faazn.mongodb.net/redditClone",
+)
 
 // Connect to MongoDB
 // Use the users router
 app.use("/user", usersRoute);
 app.use("/profile", require("./routes/profileRoute"));
 app.use("/posts", require("./routes/postRoute"));
-
+app.use("/comments", commentRoute);
 
 
 // Start server

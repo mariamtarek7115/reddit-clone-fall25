@@ -1,28 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "../components/Sidebar/Sidebar.jsx";
 import Header from "../components/Header.jsx";
+import PostCard from "../components/PostCard.jsx";
 import "./Feed.css";
 
 const API_BASE = "http://localhost:5000";
-const FALLBACK_IMG =
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
 
 export default function Feed() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // REAL POSTS (from backend)
-  const [posts, setPosts] = useState([]); // UI-ready posts
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [debugInfo, setDebugInfo] = useState("");
 
-  // COMMUNITIES (still dummy for now)
-  const [communities, setCommunities] = useState([
-    { id: 1, name: "r/AskReddit", members: "45.2M", isJoined: false },
-    { id: 2, name: "r/leagueoflegends", members: "6.8M", isJoined: false },
-    { id: 3, name: "r/OutOfTheLoop", members: "3.4M", isJoined: false },
-    { id: 4, name: "r/discordapp", members: "1.2M", isJoined: false },
-    { id: 5, name: "r/Twitch", members: "2.9M", isJoined: false },
-  ]);
+  // COMMUNITIES (fetch from backend)
+  const [communities, setCommunities] = useState([]);
+  const [communitiesLoading, setCommunitiesLoading] = useState(false);
 
   const [joinedFeatured, setJoinedFeatured] = useState(false);
 
@@ -37,7 +33,7 @@ export default function Feed() {
   const sortOptions = ["Best", "Hot", "New", "Top", "Rising"];
   const locationOptions = ["Everywhere", "Nearby", "Custom"];
 
-  // Read logged-in user from localStorage (works even without AuthContext)
+  // Read logged-in user from localStorage
   const storedUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("user"));
@@ -48,18 +44,11 @@ export default function Feed() {
 
   const currentUser = { username: storedUser?.username || "guest" };
 
-  const formatNumber = (num) => {
-    const n = Number(num) || 0;
-    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
-    return n;
-  };
-
-  // map sort -> backend sort (if your backend ignores query, it's ok)
+  // map sort -> backend sort
   const backendSort = useMemo(() => {
     if (activeSort === "New") return "new";
     if (activeSort === "Top") return "top";
     if (activeSort === "Hot") return "hot";
-    // Best/Rising: we’ll sort locally
     return "new";
   }, [activeSort]);
 
@@ -68,42 +57,85 @@ export default function Feed() {
     const fetchPosts = async () => {
       setLoading(true);
       setErr("");
+      setDebugInfo("Starting fetch...");
 
       try {
-        const res = await fetch(
-          `${API_BASE}/posts?sort=${backendSort}&page=1&limit=50`
-        );
+        const url = `${API_BASE}/posts?sort=${backendSort}&page=1&limit=50`;
+        console.log("🔍 Fetching from:", url);
+
+        const res = await fetch(url);
+        
+        console.log("📡 Response status:", res.status);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("❌ API Error response:", errorText);
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
+        }
+
         const data = await res.json();
+        console.log("📊 Full API Response:", data);
 
-        if (!res.ok) throw new Error(data.message || "Failed to load posts");
+        // DEBUG: Check what structure we have
+        console.log("🔍 Debugging response structure:");
+        console.log("- Is array?", Array.isArray(data));
+        console.log("- Has 'posts' property?", data.posts !== undefined);
+        console.log("- Posts is array?", Array.isArray(data.posts));
+        console.log("- Posts count:", data.posts ? data.posts.length : 0);
 
-        // Support different response shapes:
-        const rawPosts = Array.isArray(data)
-          ? data
-          : data.posts || data.data || [];
+        // Extract posts
+        let rawPosts = [];
+        
+        if (Array.isArray(data)) {
+          rawPosts = data;
+          console.log("✅ Response is direct array, count:", rawPosts.length);
+        } else if (data.posts && Array.isArray(data.posts)) {
+          rawPosts = data.posts;
+          console.log("✅ Found posts array in data.posts, count:", rawPosts.length);
+        } else if (data.data && Array.isArray(data.data)) {
+          rawPosts = data.data;
+          console.log("✅ Found posts array in data.data, count:", rawPosts.length);
+        } else {
+          const arrayKeys = Object.keys(data).filter(key => Array.isArray(data[key]));
+          if (arrayKeys.length > 0) {
+            rawPosts = data[arrayKeys[0]];
+            console.log(`✅ Found array in key '${arrayKeys[0]}', count:`, rawPosts.length);
+          } else {
+            console.warn("⚠️ No array found in response, using empty array");
+            rawPosts = [];
+          }
+        }
 
-        // Convert backend -> UI shape
+        console.log(`📝 Final raw posts count: ${rawPosts.length}`);
+
+        // Show first post for debugging
+        if (rawPosts.length > 0) {
+          console.log("📄 First post sample:", rawPosts[0]);
+        }
+
+        // Convert backend -> UI shape for PostCard component
         const uiPosts = rawPosts.map((p) => ({
-          id: p._id, // IMPORTANT for unique keys
+          _id: p._id,
+          id: p._id,
           title: p.title || "(No title)",
           body: p.body || "",
-          subtitle: p.body
-            ? p.body.length > 70
-              ? p.body.slice(0, 70) + "..."
-              : p.body
-            : "",
-          author: `u/${p.author?.username || "unknown"}`, // if you don’t populate, it may show unknown
+          author: p.author || { username: "unknown" },
+          community: p.community,
           subreddit: p.community?.name ? `r/${p.community.name}` : "r/general",
           upvotes: p.upvotes ?? 0,
-          comments: p.commentsCount ?? 0,
+          commentsCount: p.commentsCount ?? 0,
           voteState: null,
+          mediaUrl: p.mediaUrl || FALLBACK_IMG,
           image: p.mediaUrl || FALLBACK_IMG,
+          type: p.type || "text",
           createdAt: p.createdAt,
         }));
 
+        console.log(`🎨 Converted to ${uiPosts.length} UI posts`);
         setPosts(uiPosts);
+
       } catch (e) {
-        console.error("Feed fetch error:", e);
+        console.error("🔥 Feed fetch error:", e);
         setErr(e.message || "Something went wrong");
         setPosts([]);
       } finally {
@@ -114,29 +146,64 @@ export default function Feed() {
     fetchPosts();
   }, [backendSort]);
 
-  // local sorting (keeps your old behavior)
+  // ✅ Fetch communities from backend
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      setCommunitiesLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/community`);
+        if (res.ok) {
+          const data = await res.json();
+          const formattedCommunities = data.communities?.map((community, index) => ({
+            id: community._id || index + 1,
+            name: `r/${community.name}`,
+            members: formatNumber(community.members || 0) + " members",
+            isJoined: false,
+            _id: community._id
+          })) || [];
+          setCommunities(formattedCommunities);
+        }
+      } catch (error) {
+        console.error("Error fetching communities:", error);
+      } finally {
+        setCommunitiesLoading(false);
+      }
+    };
+
+    fetchCommunities();
+  }, []);
+
+  const formatNumber = (num) => {
+    const n = Number(num) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+    return n.toString();
+  };
+
+  // local sorting
   const filteredPosts = useMemo(() => {
     let list = [...posts];
 
     if (activeSort === "Hot") {
-      list.sort((a, b) => b.comments - a.comments);
+      list.sort((a, b) => b.commentsCount - a.commentsCount);
     } else if (activeSort === "Top") {
       list.sort((a, b) => b.upvotes - a.upvotes);
     } else if (activeSort === "Rising") {
-      list.sort((a, b) => a.upvotes - b.upvotes);
+      list.sort((a, b) => b.upvotes - a.upvotes);
+    } else if (activeSort === "Best") {
+      list.sort((a, b) => (b.upvotes * 0.7 + b.commentsCount * 0.3) - (a.upvotes * 0.7 + a.commentsCount * 0.3));
     } else {
-      // Best
-      list.sort((a, b) => b.upvotes + b.comments - (a.upvotes + a.comments));
+      list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
     return list;
-  }, [posts, activeSort, activeLocation]);
+  }, [posts, activeSort]);
 
-  // Voting pill (frontend-only for now)
-  const handlePostVote = (postId, voteType) => {
+  // Voting handler for PostCard
+  const handlePostVote = async (postId, voteType) => {
     setPosts((prev) =>
       prev.map((post) => {
-        if (post.id !== postId) return post;
+        if (post.id !== postId && post._id !== postId) return post;
 
         let newUpvotes = post.upvotes;
         let newState = voteType;
@@ -165,6 +232,20 @@ export default function Feed() {
     setJoinedFeatured((prev) => !prev);
   };
 
+  // Test API directly
+  const testApiDirectly = async () => {
+    try {
+      console.log("🧪 Testing API directly...");
+      const res = await fetch(`${API_BASE}/posts`);
+      const data = await res.json();
+      console.log("🧪 Direct test result:", data);
+      alert(`Direct test: ${data.posts ? data.posts.length : 0} posts found`);
+    } catch (error) {
+      console.error("🧪 Test failed:", error);
+      alert(`Test failed: ${error.message}`);
+    }
+  };
+
   return (
     <div className="feed">
       <Sidebar
@@ -180,227 +261,277 @@ export default function Feed() {
         <Header currentUser={currentUser} />
 
         <div className="feed-content">
+          {/* Test API Button */}
+          <button 
+            onClick={testApiDirectly}
+            style={{
+              position: 'fixed',
+              top: '80px',
+              right: '20px',
+              zIndex: 1000,
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '20px',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            Test API
+          </button>
+
           <div className="feed-grid">
-            {/* Posts Column */}
+            {/* Posts Column - REMOVED CREATE POST BAR */}
             <section className="feed-posts-column">
               {/* Filters */}
               <div className="feed-filter-bar">
-                <div className="feed-filter-wrapper">
-                  <button
-                    className="feed-filter-btn"
-                    onClick={() => setSortDropdownOpen((prev) => !prev)}
-                  >
-                    {activeSort} ▼
-                  </button>
+                <div className="filter-controls">
+                  <div className="feed-filter-wrapper">
+                    <button
+                      className="feed-filter-btn"
+                      onClick={() => setSortDropdownOpen((prev) => !prev)}
+                      onBlur={() => setTimeout(() => setSortDropdownOpen(false), 200)}
+                    >
+                      {activeSort} ▼
+                    </button>
 
-                  {sortDropdownOpen && (
-                    <div className="feed-dropdown">
-                      {sortOptions.map((opt) => (
-                        <button
-                          key={opt}
-                          className={`feed-dropdown-item ${
-                            opt === activeSort ? "active" : ""
-                          }`}
-                          onClick={() => {
-                            setActiveSort(opt);
-                            setSortDropdownOpen(false);
-                          }}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {sortDropdownOpen && (
+                      <div className="feed-dropdown">
+                        {sortOptions.map((opt) => (
+                          <button
+                            key={opt}
+                            className={`feed-dropdown-item ${
+                              opt === activeSort ? "active" : ""
+                            }`}
+                            onClick={() => {
+                              setActiveSort(opt);
+                              setSortDropdownOpen(false);
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="feed-filter-wrapper">
-                  <button
-                    className="feed-filter-btn"
-                    onClick={() => setLocDropdownOpen((prev) => !prev)}
-                  >
-                    {activeLocation}
-                  </button>
+                  <div className="feed-filter-wrapper">
+                    <button
+                      className="feed-filter-btn"
+                      onClick={() => setLocDropdownOpen((prev) => !prev)}
+                      onBlur={() => setTimeout(() => setLocDropdownOpen(false), 200)}
+                    >
+                      {activeLocation}
+                    </button>
 
-                  {locDropdownOpen && (
-                    <div className="feed-dropdown">
-                      {locationOptions.map((opt) => (
-                        <button
-                          key={opt}
-                          className={`feed-dropdown-item ${
-                            opt === activeLocation ? "active" : ""
-                          }`}
-                          onClick={() => {
-                            setActiveLocation(opt);
-                            setLocDropdownOpen(false);
-                          }}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                    {locDropdownOpen && (
+                      <div className="feed-dropdown">
+                        {locationOptions.map((opt) => (
+                          <button
+                            key={opt}
+                            className={`feed-dropdown-item ${
+                              opt === activeLocation ? "active" : ""
+                            }`}
+                            onClick={() => {
+                              setActiveLocation(opt);
+                              setLocDropdownOpen(false);
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Featured card */}
-              <article className="feed-featured-card">
-                <div className="feed-featured-header">
-                  <div className="feed-featured-avatar"></div>
-                  <div className="feed-featured-meta">
-                    <div className="feed-featured-line">
-                      <span className="feed-featured-subreddit">r/funny</span>
-                      <span className="feed-featured-author">
-                        {" "}
-                        • Posted by u/SomeUserGM • 3 hours ago
-                      </span>
+              {/* Featured Community Card (Optional) */}
+              {communities.length > 0 && (
+                <article className="feed-featured-card">
+                  <div className="feed-featured-header">
+                    <div className="feed-featured-avatar"></div>
+                    <div className="feed-featured-meta">
+                      <div className="feed-featured-line">
+                        <span className="feed-featured-subreddit">{communities[0]?.name}</span>
+                        <span className="feed-featured-author">
+                          {" "}
+                          • Featured Community • {communities[0]?.members}
+                        </span>
+                      </div>
                     </div>
+
+                    <button
+                      className={joinedFeatured ? "btn-join btn-join--joined" : "btn-join"}
+                      onClick={toggleJoinFeatured}
+                    >
+                      {joinedFeatured ? "Joined" : "Join"}
+                    </button>
                   </div>
 
-                  <button
-                    className={
-                      joinedFeatured ? "btn-join btn-join--joined" : "btn-join"
-                    }
-                    onClick={toggleJoinFeatured}
-                  >
-                    {joinedFeatured ? "Joined" : "Join"}
-                  </button>
-                </div>
-
-                <div className="feed-featured-body">
-                  <h2 className="feed-featured-title">
-                    Mom, I want to change my name
-                  </h2>
-                  <div className="feed-featured-thumbnail">
-                    <div className="feed-featured-overlay">
-                      When you realize this is the lady your Mom chose to name
-                      you after 💀💀
+                  <div className="feed-featured-body">
+                    <h2 className="feed-featured-title">
+                      Welcome to {communities[0]?.name?.replace('r/', '')}
+                    </h2>
+                    <div className="feed-featured-thumbnail">
+                      <div className="feed-featured-overlay">
+                        Join our growing community of enthusiasts and share your thoughts!
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
+                </article>
+              )}
 
               {/* Loading / Error */}
-              {loading && <div className="feed-status">Loading posts…</div>}
-              {err && <div className="feed-status feed-status--error">{err}</div>}
-
-              {/* Posts (Reddit-like layout) */}
-              {!loading &&
-                !err &&
-                filteredPosts.map((post, idx) => (
-                  <article
-                    key={post.id ?? `post-${idx}`} // ✅ prevents “only 1 shows” bug
-                    className="feed-post-card feed-post-card--large"
+              {loading && (
+                <div className="feed-status loading">
+                  <div className="loading-spinner"></div>
+                  <span>Loading posts...</span>
+                </div>
+              )}
+              
+              {err && (
+                <div className="feed-status feed-status--error">
+                  <span>⚠️ {err}</span>
+                  <button 
+                    className="retry-btn" 
+                    onClick={() => window.location.reload()}
                   >
-                    {/* header row */}
-                    <div className="feed-post-header">
-                      <div className="feed-post-header-left">
-                        <span className="feed-post-subreddit">{post.subreddit}</span>
-                        <span className="feed-post-dot">•</span>
-                        <span className="feed-post-author">{post.author}</span>
-                      </div>
-                      <button className="feed-post-more" title="More">
-                        •••
-                      </button>
-                    </div>
+                    Retry
+                  </button>
+                </div>
+              )}
 
-                    {/* title */}
-                    <h3 className="feed-post-title">{post.title}</h3>
+              {/* Posts using PostCard Component */}
+              {!loading && !err && filteredPosts.length > 0 && (
+                <div className="posts-container">
+                  {filteredPosts.map((post, index) => (
+                    <PostCard
+                      key={post.id || post._id || index}
+                      post={post}
+                      onVote={handlePostVote}
+                      showCommunity={true}
+                      showFullContent={false}
+                    />
+                  ))}
+                </div>
+              )}
 
-                    {/* body preview */}
-                    {post.subtitle && (
-                      <p className="feed-post-subtitle">{post.subtitle}</p>
-                    )}
-
-                    {/* big media */}
-                    <div className="feed-post-media">
-                      <img src={post.image} alt={post.title} />
-                    </div>
-
-                    {/* actions */}
-                    <div className="feed-post-actions">
-                      <div
-                        className={`vote-pill ${
-                          post.voteState === "up"
-                            ? "vote-pill--up"
-                            : post.voteState === "down"
-                            ? "vote-pill--down"
-                            : ""
-                        }`}
-                      >
-                        <button
-                          className={`vote-btn ${
-                            post.voteState === "up" ? "vote-btn--active" : ""
-                          }`}
-                          onClick={() => handlePostVote(post.id, "up")}
-                        >
-                          ▲
-                        </button>
-                        <span className="vote-count">
-                          {formatNumber(post.upvotes)}
-                        </span>
-                        <button
-                          className={`vote-btn ${
-                            post.voteState === "down" ? "vote-btn--active" : ""
-                          }`}
-                          onClick={() => handlePostVote(post.id, "down")}
-                        >
-                          ▼
-                        </button>
-                      </div>
-
-                      <button className="feed-action-btn">
-                        💬 {post.comments}
-                      </button>
-                      <button className="feed-action-btn">↗ Share</button>
-                    </div>
-                  </article>
-                ))}
-
+              {/* Empty State */}
               {!loading && !err && filteredPosts.length === 0 && (
-                <div className="feed-status">No posts yet.</div>
+                <div className="empty-state">
+                  <div className="empty-icon">📭</div>
+                  <h3>No posts found</h3>
+                  <p>Be the first to create a post!</p>
+                  <button 
+                    onClick={testApiDirectly}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid var(--accent)',
+                      color: 'var(--accent)',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      marginTop: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Test API Connection
+                  </button>
+                </div>
+              )}
+
+              {/* Load More */}
+              {!loading && !err && filteredPosts.length > 0 && (
+                <div className="load-more-container">
+                  <button className="load-more-btn">
+                    Load More Posts
+                  </button>
+                </div>
               )}
             </section>
 
             {/* Communities sidebar */}
             <aside className="feed-communities">
               <div className="feed-communities-card">
-                <h3 className="feed-communities-title">POPULAR COMMUNITIES</h3>
-
-                <div className="feed-communities-list">
-                  {(seeMoreCommunities ? communities : communities.slice(0, 3)).map(
-                    (community) => (
-                      <div key={community.id} className="feed-community-item">
-                        <div className="feed-community-avatar"></div>
-                        <div className="feed-community-info">
-                          <div className="feed-community-name">
-                            {community.name}
-                          </div>
-                          <div className="feed-community-members">
-                            {community.members} members
-                          </div>
-                        </div>
-
-                        <button
-                          className={
-                            community.isJoined
-                              ? "btn-join btn-join--joined"
-                              : "btn-join"
-                          }
-                          onClick={() => toggleJoinCommunity(community.id)}
-                        >
-                          {community.isJoined ? "Joined" : "Join"}
-                        </button>
-                      </div>
-                    )
-                  )}
+                <div className="card-header">
+                  <h3 className="feed-communities-title">POPULAR COMMUNITIES</h3>
+                  <button 
+                    className="create-community-btn"
+                    onClick={() => console.log("Create community clicked")}
+                  >
+                    Create
+                  </button>
                 </div>
 
-                <button
-                  className="feed-see-more-btn"
-                  onClick={() => setSeeMoreCommunities((prev) => !prev)}
-                >
-                  {seeMoreCommunities ? "Show less" : "See more"}
-                </button>
+                {communitiesLoading ? (
+                  <div className="communities-loading">
+                    <div className="loading-spinner small"></div>
+                    <span>Loading communities...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="feed-communities-list">
+                      {(seeMoreCommunities ? communities : communities.slice(0, 5)).map(
+                        (community) => (
+                          <div key={community.id} className="feed-community-item">
+                            <div className="feed-community-avatar">
+                              {community.name.charAt(2) || 'R'}
+                            </div>
+                            <div className="feed-community-info">
+                              <div className="feed-community-name">
+                                {community.name}
+                              </div>
+                              <div className="feed-community-members">
+                                {community.members}
+                              </div>
+                            </div>
+
+                            <button
+                              className={
+                                community.isJoined
+                                  ? "btn-join btn-join--joined"
+                                  : "btn-join"
+                              }
+                              onClick={() => toggleJoinCommunity(community.id)}
+                            >
+                              {community.isJoined ? "Joined" : "Join"}
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    <button
+                      className="feed-see-more-btn"
+                      onClick={() => setSeeMoreCommunities((prev) => !prev)}
+                    >
+                      {seeMoreCommunities ? "Show less" : "See more"}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Reddit Premium Ad */}
+              <div className="premium-card">
+                <div className="premium-header">
+                  <h4>Reddit Premium</h4>
+                  <span className="premium-badge">PREMIUM</span>
+                </div>
+                <p className="premium-desc">
+                  The best Reddit experience, with monthly Coins
+                </p>
+                <button className="premium-btn">Try Now</button>
+              </div>
+
+              {/* Footer Links */}
+              <div className="footer-links">
+                <a href="/content-policy">Content Policy</a>
+                <a href="/privacy-policy">Privacy Policy</a>
+                <a href="/user-agreement">User Agreement</a>
+                <div className="copyright">
+                  © 2024 Reddit Clone. All rights reserved.
+                </div>
               </div>
             </aside>
           </div>
