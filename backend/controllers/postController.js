@@ -1,21 +1,15 @@
-// backend/controllers/postController.js
 const mongoose = require("mongoose");
 const Post = require("../models/Post");
 const User = require("../models/User");
 const Community = require("../models/Community");
 
-/**
- * Helper: safe int parsing
- */
+
 const toInt = (val, fallback) => {
   const n = parseInt(val, 10);
   return Number.isFinite(n) ? n : fallback;
 };
 
-/**
- * POST /posts
- * body: { authorId, communityName OR communityId, title, body?, type?, mediaUrl? }
- */
+
 exports.createPost = async (req, res) => {
   try {
     const { title, body, authorId, communityId } = req.body;
@@ -64,11 +58,7 @@ exports.createPost = async (req, res) => {
   }
 };
 
-/**
- * GET /posts
- * query: sort=new|top|hot, page, limit
- * optional filters: communityName, username
- */
+
 exports.getFeedPosts = async (req, res) => {
   try {
     const sort = (req.query.sort || "new").toLowerCase();
@@ -118,9 +108,7 @@ exports.getFeedPosts = async (req, res) => {
   }
 };
 
-/**
- * GET /posts/:postId
- */
+
 exports.getPostById = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -141,9 +129,7 @@ exports.getPostById = async (req, res) => {
   }
 };
 
-/**
- * GET /posts/community/:communityName
- */
+
 exports.getPostsByCommunity = async (req, res) => {
   try {
     const { communityName } = req.params;
@@ -163,9 +149,6 @@ exports.getPostsByCommunity = async (req, res) => {
   }
 };
 
-/**
- * GET /posts/user/:username
- */
 exports.getPostsByUser = async (req, res) => {
   try {
     const { username } = req.params;
@@ -185,11 +168,7 @@ exports.getPostsByUser = async (req, res) => {
   }
 };
 
-/**
- * PATCH /posts/:postId
- * body: { authorId, title?, body?, type?, mediaUrl? }
- * (no JWT yet) -> basic author check
- */
+
 exports.updatePost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -227,11 +206,7 @@ exports.updatePost = async (req, res) => {
   }
 };
 
-/**
- * DELETE /posts/:postId
- * body: { authorId }
- * soft delete -> isDeleted=true
- */
+
 exports.deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
