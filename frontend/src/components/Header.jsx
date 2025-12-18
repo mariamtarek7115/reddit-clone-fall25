@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ProfileMenu from "./ProfileMenu.jsx";
 import avatarImg from "../images/avatar.jpg";
 import "./Header.css";
@@ -11,6 +12,18 @@ const Header = () => {
 
   const username = user?.username || "guest";
 
+  const navigate = useNavigate();
+
+  const handleIconClick = (type) => {
+    if (type === "create") {
+      navigate("/createpost");
+      return;
+    }
+
+    console.log(`${type} clicked`);
+    // TODO: implement icon-specific actions (open messages, show notifications)
+  };
+
   return (
     <header className="app-header">
       <div className="header-center">
@@ -21,9 +34,27 @@ const Header = () => {
       </div>
 
       <div className="header-right">
-        <span className="icon">💬</span>
-        <span className="icon">➕</span>
-        <span className="icon">🔔</span>
+        <button
+          className="icon icon-button"
+          aria-label="messages"
+          onClick={() => handleIconClick("messages")}
+        >
+          💬
+        </button>
+        <button
+          className="icon icon-button"
+          aria-label="create"
+          onClick={() => handleIconClick("create")}
+        >
+          ➕
+        </button>
+        <button
+          className="icon icon-button"
+          aria-label="notifications"
+          onClick={() => handleIconClick("notifications")}
+        >
+          🔔
+        </button>
 
         <img
           className="user-avatar"
