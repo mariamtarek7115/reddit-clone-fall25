@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./CreatePost.css";
 
 export default function CreatePost() {
@@ -12,6 +13,7 @@ export default function CreatePost() {
   const [url, setUrl] = useState("");
   const [tab, setTab] = useState("Text");
 
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
   e.preventDefault();
@@ -50,6 +52,9 @@ export default function CreatePost() {
     setBody("");
     setImage(null);
     setUrl("");
+
+    // Navigate to profile and open Posts tab
+    navigate("/profile", { state: { tab: "Posts" } });
   } catch (err) {
     console.error("Create post error:", err);
     alert("Server error");

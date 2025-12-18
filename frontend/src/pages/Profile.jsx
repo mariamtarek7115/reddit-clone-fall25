@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import NavigationMenu from "../components/NavigationMenu";
 import PostCard from "../components/PostCard";
 import { AuthContext } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 import "./Profile.css"; 
 
 const API_BASE = "http://localhost:5000";
@@ -11,12 +12,13 @@ const API_BASE = "http://localhost:5000";
 const Profile = () => {
   const { user } = useContext(AuthContext);
   const username = user?.username;
+  const location = useLocation();
 
   const [sidebarActive, setSidebarActive] = useState("Home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Tabs
-  const [activeTab, setActiveTab] = useState("Overview");
+  const [activeTab, setActiveTab] = useState(location.state?.tab || "Overview");
 
   // Sidebar dummy communities
   const [communities, setCommunities] = useState([
@@ -41,6 +43,12 @@ const Profile = () => {
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
 
   // Handle voting in profile (update local state)
   const handleVote = (postId, voteType) => {

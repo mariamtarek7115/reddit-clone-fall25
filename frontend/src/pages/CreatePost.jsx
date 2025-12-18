@@ -20,6 +20,7 @@ export default function CreatePostPage() {
     // Implement join/leave logic here
   };
 
+
   return (
     <div className="page-wrapper">
       <Header setSidebarOpen={setSidebarOpen} />
