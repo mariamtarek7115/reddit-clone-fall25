@@ -12,7 +12,9 @@ const toInt = (val, fallback) => {
 
 exports.createPost = async (req, res) => {
   try {
-    const { title, body, authorId, communityId, type, mediaUrl } = req.body;
+    // For multipart/form-data, multer puts file on req.file and text fields on req.body
+    const { title, body, authorId, communityId, url } = req.body;
+    const file = req.file;
 
     // ✅ Required fields
     if (!title || !authorId) {
@@ -42,15 +44,27 @@ exports.createPost = async (req, res) => {
       community = communityId;
     }
 
+    const hasBody = body && body.trim().length > 0;
+    const hasFile = Boolean(file);
+    const hasUrl = url && url.trim().length > 0;
+
+    let computedType = "text";
+    const filledCount = [hasBody, hasFile, hasUrl].filter(Boolean).length;
+    if (filledCount > 1) computedType = "mixed";
+    else if (hasFile) computedType = "image";
+    else if (hasUrl) computedType = "link";
+
+    const mediaUrl = hasFile ? `/uploads/${file.filename}` : null;
+
     const newPost = new Post({
       title,
-      body: body || null,
-      type: type || "text",
-      mediaUrl: mediaUrl || null,
+      body: hasBody ? body : null,
+      type: computedType,
+      mediaUrl: mediaUrl,
+      url: hasUrl ? url : null,
       author: authorId,
       community: community || undefined,
     });
-
 
     const savedPost = await newPost.save();
 
@@ -175,7 +189,8 @@ exports.getPostsByUser = async (req, res) => {
 exports.updatePost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { authorId, title, body, type, mediaUrl } = req.body;
+    const { authorId, title, body, url } = req.body;
+    const file = req.file;
 
     if (!mongoose.Types.ObjectId.isValid(postId)) {
       return res.status(400).json({ message: "Invalid postId" });
@@ -193,8 +208,18 @@ exports.updatePost = async (req, res) => {
 
     if (typeof title === "string") post.title = title;
     if (typeof body === "string") post.body = body;
-    if (typeof type === "string") post.type = type;
-    if (typeof mediaUrl === "string") post.mediaUrl = mediaUrl;
+    if (typeof url === "string") post.url = url;
+    if (file) post.mediaUrl = `/uploads/${file.filename}`;
+
+    // Recompute type if needed
+    const hasBody = post.body && post.body.trim().length > 0;
+    const hasFile = Boolean(post.mediaUrl);
+    const hasUrl = post.url && post.url.trim().length > 0;
+    const filledCount = [hasBody, hasFile, hasUrl].filter(Boolean).length;
+    if (filledCount > 1) post.type = "mixed";
+    else if (hasFile) post.type = "image";
+    else if (hasUrl) post.type = "link";
+    else post.type = "text";
 
     await post.save();
 

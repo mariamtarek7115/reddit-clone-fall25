@@ -19,6 +19,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
 // MongoDB
 mongoose.connect(
   "mongodb+srv://mariamtarek7144:Test123@cluster0.y8faazn.mongodb.net/redditClone"

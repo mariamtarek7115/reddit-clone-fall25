@@ -16,59 +16,63 @@ export default function CreatePost() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
+  //haga zay di mafrood hatetshal lama n3mel el protected routes
   if (!user) {
     alert("You must be logged in to create a post");
     return;
   }
 
-  const formData = new FormData();
-  formData.append("title", title);
-  formData.append("authorId", user._id);
-  formData.append("type", tab.toLowerCase());
-    if (tab === "Text") {
-    formData.append("body", body);
-  }
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("authorId", user._id);
 
-  if (tab === "Images" && image) {
-    formData.append("image", image);
-  }
+    const hasBody = body && body.trim().length > 0;
+    const hasImage = Boolean(image);
+    const hasUrl = url && url.trim().length > 0;
 
-  if (tab === "Link") {
-    formData.append("url", url);
-  }
+    // Determine type
+    let computedType = "text";
+    const filledCount = [hasBody, hasImage, hasUrl].filter(Boolean).length;
+    if (filledCount > 1) computedType = "mixed";
+    else if (hasImage) computedType = "image";
+    else if (hasUrl) computedType = "link";
 
+    formData.append("type", computedType);
 
+    if (hasBody) formData.append("body", body);
+    if (hasImage) formData.append("image", image);
+    if (hasUrl) formData.append("url", url);
 
-  try {
-    const res = await fetch("http://localhost:5000/posts", {
-      method: "POST",
-      body: formData
-    });
+    try {
+      const res = await fetch("http://localhost:5000/posts", {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      alert(data.message || "Failed to create post");
-      return;
+      if (!res.ok) {
+        alert(data.message || "Failed to create post");
+        return;
+      }
+
+      console.log("Post created:", data);
+
+      // Reset form
+      setTitle("");
+      setBody("");
+      setImage(null);
+      setUrl("");
+
+      // Navigate to profile and open Posts tab
+      navigate("/profile", { state: { tab: "Posts" } });
+    } catch (err) {
+      console.error("Create post error:", err);
+      alert("Server error");
     }
-
-    console.log("Post created:", data);
-
-    // Reset form
-    setTitle("");
-    setBody("");
-    setImage(null);
-    setUrl("");
-
-    // Navigate to profile and open Posts tab
-    navigate("/profile", { state: { tab: "Posts" } });
-  } catch (err) {
-    console.error("Create post error:", err);
-    alert("Server error");
-  }
-};
+  };
 
 
 

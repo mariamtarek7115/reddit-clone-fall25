@@ -25,10 +25,11 @@ const postSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["text", "image", "video"],
+      enum: ["text", "image", "video", "link", "mixed"],
       default: "text",
     },
-    mediaUrl: String, // image / video url
+    mediaUrl: String, // image / video url or uploaded file path
+    url: String, // external link URL (if any) 
 
     upvotes: {
       type: Number,

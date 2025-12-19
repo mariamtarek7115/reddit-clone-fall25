@@ -34,7 +34,12 @@ const PostCard = ({
   const authorName = author?.username || author || "unknown";
   const communityName = community?.name || subreddit || "general";
   const postImage = mediaUrl || image;
-  const isImage = type === "image" || !!postImage;
+  // if mediaUrl is a server-relative path (e.g. /uploads/...), prefix with backend host
+  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+  const postImageSrc = typeof postImage === "string" && postImage.startsWith("/uploads")
+    ? `${API_BASE}${postImage}`
+    : postImage;
+  const isImage = type === "image" || !!postImageSrc;
 
   
   const formatNumber = (num) => {
@@ -94,7 +99,7 @@ const PostCard = ({
       {isImage && (
         <div className="post-card-media">
           <img 
-            src={postImage} 
+            src={postImageSrc} 
             alt={title}
             className="post-card-image"
             loading="lazy"
