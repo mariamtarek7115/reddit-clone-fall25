@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 import "./Sidebar.css";
+
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
 const Sidebar = ({
   sidebarActive = "Home",
@@ -11,6 +14,58 @@ const Sidebar = ({
   communities = [],
 }) => {
   const navigate = useNavigate();
+
+  // Auth / joined communities
+  const { user } = useContext(AuthContext);
+  const [joinedCommunities, setJoinedCommunities] = useState([]);
+  const [joinedLoading, setJoinedLoading] = useState(false);
+
+  const displayCommunities = (joinedCommunities && joinedCommunities.length > 0)
+    ? joinedCommunities
+    : communities;
+
+  useEffect(() => {
+    if (!user?._id) {
+      setJoinedCommunities([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchJoined = async () => {
+      setJoinedLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/community/user/${user._id}`, {
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Failed to fetch communities");
+
+        let arr = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data.communities)) arr = data.communities;
+        else {
+          const key = Object.keys(data).find((k) => Array.isArray(data[k]));
+          if (key) arr = data[key];
+        }
+
+        const formatted = arr.map((c) => ({
+          id: c._id || c.id,
+          name: c.name ? (c.name.startsWith("r/") ? c.name : `r/${c.name}`) : c.name,
+          _id: c._id,
+        }));
+
+        setJoinedCommunities(formatted);
+      } catch (e) {
+        if (e.name !== "AbortError") console.error("Failed to fetch joined communities:", e);
+        setJoinedCommunities([]);
+      } finally {
+        setJoinedLoading(false);
+      }
+    };
+
+    fetchJoined();
+    return () => controller.abort();
+  }, [user?._id]);
 
   return (
     <aside
@@ -96,13 +151,21 @@ const Sidebar = ({
             <button className="sidebar-nav-item">Press</button>
 
             <button
+              className="sidebar-start-community"
+              onClick={() => navigate("/createcommunity")}
+            >
+              <span className="start-icon">+</span>
+              {sidebarOpen && <span className="start-text"> Start a community</span>}
+            </button>
+
+            <button
               className="sidebar-section-title"
               onClick={() => navigate("/communities")}
             >
               COMMUNITIES
             </button>
 
-            {communities.map((community) => {
+            {displayCommunities.map((community) => {
               const raw = community.name || "";
               const communitySlug = raw.replace(/^r\//, "");
               const label = raw.startsWith("r/") ? raw : `r/${raw}`;

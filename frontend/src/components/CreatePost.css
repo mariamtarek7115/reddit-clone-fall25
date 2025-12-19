@@ -20,6 +20,53 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  position: relative; /* for dropdown */
+}
+
+.community-dropdown {
+  position: absolute;
+  left: 0;
+  top: 48px;
+  background: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 220px;
+  z-index: 40;
+}
+
+.community-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  border-radius: 6px;
+}
+
+.community-item:hover {
+  background: #f6f7f8;
+}
+
+.community-item.selected {
+  background: #0079d3;
+  color: #fff;
+}
+
+.community-loading, .community-error, .community-empty {
+  padding: 8px 10px;
+  color: #666;
+}
+
+/* Reuse community-item styles for small buttons in search results */
+.community-dropdown .community-item[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .community-selector {

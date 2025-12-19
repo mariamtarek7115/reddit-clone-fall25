@@ -68,7 +68,12 @@ exports.createPost = async (req, res) => {
 
     const savedPost = await newPost.save();
 
-    res.status(201).json(savedPost);
+    // Return populated post so frontend can navigate to community or show details
+    const populated = await Post.findById(savedPost._id)
+      .populate("author", "username")
+      .populate("community", "name");
+
+    res.status(201).json(populated);
   } catch (error) {
     console.error("Create post error:", error);
     res.status(500).json({ message: "Server error creating post" });
@@ -88,7 +93,8 @@ exports.getFeedPosts = async (req, res) => {
     const filter = { isDeleted: false };
 
     if (communityName) {
-      const community = await Community.findOne({ name: communityName });
+      const name = String(communityName || "").trim().toLowerCase();
+      const community = await Community.findOne({ name });
       if (!community) return res.status(404).json({ message: "Community not found" });
       filter.community = community._id;
     }

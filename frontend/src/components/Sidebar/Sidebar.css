@@ -89,23 +89,57 @@
 }
 
 .sidebar-section-title {
-  margin-top: 24px;
-  margin-bottom: 8px;
+  
   padding: 0 12px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--muted);
-}
-
-.sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid var(--border);
-}
-
-.sidebar-toggle {
-  background: none;
-  border: none;
-  color: var(--muted);
-  font-size: 20px;
+  
+  border-radius: 8px;
   cursor: pointer;
+  margin: 8px 8px 12px;
+  padding: 8px 12px;
+  background-color: var(--accent);
+  color: #fff;
+
+}
+
+/* Start community button */
+.sidebar-start-community {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 16px);
+  margin: 8px 8px 12px;
+  padding: 8px 12px;
+  background-color: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.sidebar-start-community .start-icon {
+  background: rgba(255,255,255,0.16);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.sidebar-start-community:hover {
+  filter: brightness(0.95);
+}
+
+/* Collapsed sidebar: show only the + icon */
+.feed-sidebar--collapsed .sidebar-start-community {
+  width: 48px;
+  padding: 8px;
+  justify-content: center;
+}
+
+.feed-sidebar--collapsed .sidebar-start-community .start-text {
+  display: none;
 }

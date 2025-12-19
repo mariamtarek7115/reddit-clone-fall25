@@ -2,11 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import Sidebar from "../components/Sidebar/Sidebar.jsx";
+import PostCard from "../components/PostCard.jsx";
 import "./CommunityPage.css";
 
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+
 const CommunityPage = () => {
-  const { communityName } = useParams();
+  const { communityName: rawCommunityName } = useParams();
   const navigate = useNavigate();
+
+  // Normalize community name (strip leading :, r/ or slashes) to avoid malformed params
+  const communityName = rawCommunityName
+    ? String(rawCommunityName).replace(/^[:\/]+|^r\//i, "").trim()
+    : rawCommunityName;
 
   // Sidebar state (REQUIRED for your Sidebar component)
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,8 +33,13 @@ const CommunityPage = () => {
   };
 
   const [community, setCommunity] = useState(null);
-  const [sortBy, setSortBy] = useState("hot");
+  const [sortBy, setSortBy] = useState("all");
   const [showMenu, setShowMenu] = useState(false);
+
+  // Posts for this community
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
     if (!communityName) return;
@@ -46,6 +59,73 @@ const CommunityPage = () => {
       },
     });
   }, [communityName]);
+
+  // Fetch posts for the current community
+  useEffect(() => {
+    if (!community || !community.name) return;
+
+    const fetchPosts = async () => {
+      setLoading(true);
+      setErr("");
+
+      try {
+        let url = `${API_BASE}/posts?communityName=${encodeURIComponent(
+          community.name
+        )}`;
+
+        // When "All" is selected, we omit the sort param so backend returns community posts in default order
+        if (sortBy && sortBy !== "all") {
+          url += `&sort=${encodeURIComponent(sortBy)}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        // Normalize response to an array of posts
+        let rawPosts = [];
+        if (Array.isArray(data)) rawPosts = data;
+        else if (data.posts && Array.isArray(data.posts)) rawPosts = data.posts;
+        else if (data.data && Array.isArray(data.data)) rawPosts = data.data;
+        else {
+          const arrKey = Object.keys(data).find((k) => Array.isArray(data[k]));
+          if (arrKey) rawPosts = data[arrKey];
+        }
+
+        // Map to UI shape expected by PostCard
+        const uiPosts = rawPosts.map((p) => ({
+          _id: p._id,
+          id: p._id,
+          title: p.title || "(No title)",
+          body: p.body || "",
+          author: p.author || { username: "unknown" },
+          community: p.community,
+          subreddit: p.community?.name ? `r/${p.community.name}` : "r/general",
+          upvotes: p.upvotes ?? 0,
+          commentsCount: p.commentsCount ?? 0,
+          voteState: null,
+          mediaUrl: p.mediaUrl || null,
+          image: p.mediaUrl || null,
+          type: p.type || "text",
+          createdAt: p.createdAt,
+        }));
+
+        setPosts(uiPosts);
+      } catch (e) {
+        console.error("Error fetching community posts:", e);
+        setErr(e.message || "Failed to fetch posts");
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [community, sortBy]);
 
   if (!community) return <div className="loading">Loading…</div>;
 
@@ -123,27 +203,48 @@ const CommunityPage = () => {
             {/* FEED */}
             <main className="community-feed">
               <div className="sort-bar">
-                {["hot", "new", "top"].map((type) => (
-                  <button
-                    key={type}
-                    className={sortBy === type ? "active" : ""}
-                    onClick={() => setSortBy(type)}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </button>
-                ))}
-              </div>
-
-              <div className="empty-feed">
-                <h2>This community doesn’t have any posts yet</h2>
-                <p>Make one and get this feed started.</p>
                 <button
-                  className="primary-cta"
-                  onClick={() => navigate("/createpost")}
+                  className={sortBy === 'all' ? 'active' : ''}
+                  onClick={() => setSortBy('all')}
                 >
-                  Create Post
+                  All
                 </button>
               </div>
+
+              {/* Posts (fetch on mount and when sortBy changes). "All" omits sort param so backend returns community posts without additional sorting. */}
+              {loading && <div className="loading">Loading posts…</div>}
+
+              {err && <div className="error">⚠️ {err}</div>}
+
+              {!loading && !err && posts.length > 0 && (
+                <div className="posts-container">
+                  {posts.map((p, idx) => (
+                    <PostCard
+                      key={p._id || p.id || idx}
+                      post={{
+                        ...p,
+                        image: p.mediaUrl || null,
+                        mediaUrl: p.mediaUrl || null,
+                      }}
+                      showCommunity={false}
+                      showFullContent={false}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {!loading && !err && posts.length === 0 && (
+                <div className="empty-feed">
+                  <h2>This community doesn’t have any posts yet</h2>
+                  <p>Make one and get this feed started.</p>
+                  <button
+                    className="primary-cta"
+                    onClick={() => navigate("/createpost")}
+                  >
+                    Create Post
+                  </button>
+                </div>
+              )}
             </main>
 
             {/* RIGHT SIDEBAR */}
