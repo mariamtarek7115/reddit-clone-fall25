@@ -6,8 +6,6 @@ import { AuthContext } from "../context/AuthContext";
 import "./Feed.css";
 
 const API_BASE = "http://localhost:5000";
-const FALLBACK_IMG =
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
 
 export default function Feed() {
   const { user } = useContext(AuthContext);
@@ -100,8 +98,8 @@ export default function Feed() {
           upvotes: p.upvotes ?? 0,
           commentsCount: p.commentsCount ?? 0,
           voteState: null,
-          mediaUrl: p.mediaUrl || FALLBACK_IMG,
-          image: p.mediaUrl || FALLBACK_IMG,
+          mediaUrl: p.mediaUrl || null,
+          image: p.mediaUrl || null,
           type: p.type || "text",
           createdAt: p.createdAt,
         }));

@@ -9,6 +9,7 @@ const communitySchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      lowercase: true, // stored in lowercase to enforce case-insensitive uniqueness
       minlength: 3,
       maxlength: 21,
     },
@@ -33,7 +34,7 @@ const communitySchema = new mongoose.Schema(
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
 
     moderators: [

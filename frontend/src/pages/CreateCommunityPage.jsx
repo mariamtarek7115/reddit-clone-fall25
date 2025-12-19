@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './CreateCommunityPage.css';
+import { AuthContext } from '../context/AuthContext';
 
 const CreateCommunityPage = () => {
   const [step, setStep] = useState(1);
@@ -13,6 +14,11 @@ const CreateCommunityPage = () => {
   });
 
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -36,10 +42,49 @@ const CreateCommunityPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Connect to backend
-    console.log('Community created:', formData);
-    alert(`Community "r/${formData.name}" created successfully!`);
-    navigate(`/r/${formData.name}`);
+    setError("");
+    setSuccess("");
+
+    // Basic validation
+    if (!formData.name || !formData.description) {
+      setError('Name and description are required');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        type: formData.type,
+        mature: !!formData.mature,
+      };
+      if (user && user._id) payload.creator = user._id;
+
+      const res = await fetch('http://localhost:5000/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 409) setError(data.message || 'Community name already exists');
+        else setError(data.message || 'Failed to create community');
+        return;
+      }
+
+      setSuccess(`Community "r/${data.name}" created successfully!`);
+
+      // Navigate to community page
+      navigate(`/r/${data.name}`);
+    } catch (err) {
+      console.error('Create community error:', err);
+      setError('Server error creating community');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Sample topics like Reddit
@@ -248,9 +293,13 @@ const CreateCommunityPage = () => {
               <button type="button" className="cc-back-btn" onClick={prevStep}>
                 Back
               </button>
-              <button type="button" className="cc-create-final-btn" onClick={handleSubmit}>
-                Create Community
-              </button>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {error && <div style={{ color: 'red' }}>{error}</div>}
+                {success && <div style={{ color: 'green' }}>{success}</div>}
+                <button type="button" className="cc-create-final-btn" onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? 'Creating...' : 'Create Community'}
+                </button>
+              </div>
             </div>
           </div>
         )}

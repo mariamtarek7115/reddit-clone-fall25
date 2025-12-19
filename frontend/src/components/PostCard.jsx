@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
    
 
 
-const FALLBACK_IMG = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=900&h=520&fit=crop";
-
 const PostCard = ({ 
   post, 
   onVote, 
@@ -33,8 +31,20 @@ const PostCard = ({
   const postId = _id || id;
   const authorName = author?.username || author || "unknown";
   const communityName = community?.name || subreddit || "general";
-  const postImage = mediaUrl || image || FALLBACK_IMG;
-  const isImage = type === "image" || postImage;
+
+  // Only show an image when a media URL (uploaded file) or explicit image field is present
+  const postImage = mediaUrl || image || null;
+  const hasImage = !!postImage;
+
+  // if mediaUrl is a server-relative path (e.g. /uploads/...), prefix with backend host
+  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
+  const postImageSrc = hasImage && typeof postImage === "string" && postImage.startsWith("/uploads")
+    ? `${API_BASE}${postImage}`
+    : hasImage
+    ? postImage
+    : null;
+  const isImage = hasImage;
+
   
   const formatNumber = (num) => {
     const n = Number(num) || 0;
@@ -93,7 +103,7 @@ const PostCard = ({
       {isImage && (
         <div className="post-card-media">
           <img 
-            src={postImage} 
+            src={postImageSrc} 
             alt={title}
             className="post-card-image"
             loading="lazy"
