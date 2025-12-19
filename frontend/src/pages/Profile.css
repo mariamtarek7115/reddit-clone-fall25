@@ -293,3 +293,26 @@
     font-size: 18px;
   }
 }
+
+/* Drafts */
+.draft-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.drafts-list img {
+  border-radius: 6px;
+  max-width: 100%;
+}
+
+.drafts-list .primary-cta {
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.drafts-list .save-draft {
+  padding: 6px 12px;
+}

@@ -30,7 +30,9 @@ const ProfileMenu = ({ onClose }) => {
 
       <div className="profile-menu-divider" />
 
-      <button className="profile-menu-item">📝 Drafts</button>
+      <button className="profile-menu-item" onClick={() => { navigate('/profile', { state: { tab: 'Drafts' } }); onClose?.(); }}>
+        📝 Drafts
+      </button>
 
       <div className="profile-menu-item profile-menu-toggle">
         🌙 Dark Mode
