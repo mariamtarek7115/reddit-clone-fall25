@@ -136,12 +136,6 @@
   margin: 0 auto;
 }
 
-/* If you prefer consistent box height (letterbox effect), uncomment:
-.post-card-media {
-  height: 400px;
-}
-*/
-
 /* Actions */
 .post-card-actions {
   display: flex;
