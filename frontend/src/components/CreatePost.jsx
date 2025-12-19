@@ -23,19 +23,28 @@ export default function CreatePost() {
     return;
   }
 
-  const payload = {
-    title,
-    body,
-    authorId: user._id,
-  };
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("authorId", user._id);
+  formData.append("type", tab.toLowerCase());
+    if (tab === "Text") {
+    formData.append("body", body);
+  }
+
+  if (tab === "Images" && image) {
+    formData.append("image", image);
+  }
+
+  if (tab === "Link") {
+    formData.append("url", url);
+  }
+
+
 
   try {
     const res = await fetch("http://localhost:5000/posts", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+      body: formData
     });
 
     const data = await res.json();

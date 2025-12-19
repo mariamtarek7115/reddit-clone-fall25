@@ -18,10 +18,10 @@ const toInt = (val, fallback) => {
  */
 exports.createPost = async (req, res) => {
   try {
-    const { title, body, authorId, communityId } = req.body;
+    const { title, body, authorId, communityId, type, mediaUrl } = req.body;
 
     // ✅ Required fields
-    if (!title || !body || !authorId) {
+    if (!title || !authorId) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -50,10 +50,13 @@ exports.createPost = async (req, res) => {
 
     const newPost = new Post({
       title,
-      body,
+      body: body || null,
+      type: type || "text",
+      mediaUrl: mediaUrl || null,
       author: authorId,
-      community: community || undefined, // ✅ optional
+      community: community || undefined,
     });
+
 
     const savedPost = await newPost.save();
 

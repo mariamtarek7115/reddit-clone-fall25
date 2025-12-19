@@ -33,8 +33,9 @@ const PostCard = ({
   const postId = _id || id;
   const authorName = author?.username || author || "unknown";
   const communityName = community?.name || subreddit || "general";
-  const postImage = mediaUrl || image || FALLBACK_IMG;
-  const isImage = type === "image" || postImage;
+  const postImage = mediaUrl || image;
+  const isImage = type === "image" || !!postImage;
+
   
   const formatNumber = (num) => {
     const n = Number(num) || 0;
