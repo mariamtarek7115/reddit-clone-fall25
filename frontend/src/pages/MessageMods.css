@@ -1,0 +1,110 @@
+mo.message-mods-page {
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 40px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.message-mods-card {
+  width: 100%;
+  max-width: 640px;
+  padding: 0 16px;
+}
+
+.message-mods-card h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+/* Form groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-group label span {
+  color: red;
+}
+
+/* Inputs */
+.input-pill {
+  background: #edf0f2;
+  border: none;
+  border-radius: 24px;
+  padding: 14px 18px;
+  font-size: 15px;
+  outline: none;
+}
+
+.input-pill:disabled {
+  color: #555;
+}
+
+/* Textarea */
+.textarea-pill {
+  background: #edf0f2;
+  border: none;
+  border-radius: 18px;
+  padding: 14px 18px;
+  font-size: 15px;
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+}
+
+/* Sender pill */
+.sender-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #edf0f2;
+  padding: 10px 14px;
+  border-radius: 24px;
+  width: fit-content;
+}
+
+.sender-pill img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+/* Character count */
+.char-count {
+  font-size: 12px;
+  color: #777;
+  align-self: flex-end;
+}
+
+/* Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.send-btn {
+  background: #e5e5e5;
+  color: #999;
+  border: none;
+  border-radius: 24px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+.send-btn.active {
+  background: #0079d3;
+  color: white;
+  cursor: pointer;
+}

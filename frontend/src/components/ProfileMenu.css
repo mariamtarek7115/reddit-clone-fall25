@@ -15,6 +15,10 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.profile-menu,
+.profile-menu * {
+  box-sizing: border-box;
+}
 /* Header */
 .profile-menu-header {
   display: flex;
@@ -84,14 +88,16 @@
 /* Dark mode toggle */
 .profile-menu-toggle {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  width: 100%;
 }
 
 /* Switch */
 .switch {
   position: relative;
-  width: 36px;
-  height: 20px;
+  width: 30px;
+  height: 18px;
 }
 
 .switch input {
@@ -102,7 +108,7 @@
   position: absolute;
   cursor: pointer;
   background-color: #ccc;
-  border-radius: 20px;
+  border-radius: 18px;
   top: 0;
   left: 0;
   right: 0;
@@ -112,8 +118,8 @@
 .slider:before {
   content: "";
   position: absolute;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   left: 2px;
   bottom: 2px;
   background: white;
@@ -126,5 +132,5 @@
 }
 
 .switch input:checked + .slider:before {
-  transform: translateX(16px);
+  transform: translateX(12px);
 }

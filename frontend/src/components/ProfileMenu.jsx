@@ -21,7 +21,7 @@ const ProfileMenu = ({ onClose }) => {
   return (
     <div className="profile-menu">
       <div className="profile-menu-header">
-        <img className="profile-menu-avatar" src={avatarImg} alt="avatar" />
+        <img className="profile-menu-avatar" src={avatarImg} alt="avatar" onClick={() => navigate("/profile")} style={{ cursor: "pointer" }} />
         <div>
           <div className="profile-menu-username">{username}</div>
           <div className="profile-menu-handle">u/{username}</div>
@@ -30,25 +30,12 @@ const ProfileMenu = ({ onClose }) => {
 
       <div className="profile-menu-divider" />
 
-      <button className="profile-menu-item">👕 Edit Avatar</button>
       <button className="profile-menu-item">📝 Drafts</button>
-
-      <div className="profile-menu-item">
-        🏆 Achievements
-        <span className="profile-menu-sub">5 unlocked</span>
-      </div>
-
-      <button className="profile-menu-item">
-        💰 Earn
-        <span className="profile-menu-sub">Earn cash on Reddit</span>
-      </button>
-
-      <button className="profile-menu-item">🛡 Premium</button>
 
       <div className="profile-menu-item profile-menu-toggle">
         🌙 Dark Mode
-        <label className="switch">
-          <input type="checkbox" checked={isDark} onChange={toggleTheme} />
+        <label className="switch" htmlFor="dark-mode-toggle">
+          <input id="dark-mode-toggle" type="checkbox" checked={isDark} onChange={toggleTheme} />
           <span className="slider" />
         </label>
       </div>
@@ -58,11 +45,6 @@ const ProfileMenu = ({ onClose }) => {
       </button>
 
       <div className="profile-menu-divider" />
-
-      <button className="profile-menu-item">📢 Advertise on Reddit</button>
-      <button className="profile-menu-item">
-        🧪 Try Reddit Pro <span className="beta">BETA</span>
-      </button>
 
       <button className="profile-menu-item">⚙ Settings</button>
     </div>
