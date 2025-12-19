@@ -26,6 +26,7 @@ function App() {
         <Route path="/r/:communityName/message-mods" element={<MessageMods />} />
         <Route path="/r/:communityName/mods" element={<ModsAndMembers />} />
         <Route path="/createcommunity" element={<CreateCommunityPage />} />
+        <Route path="/u/:username" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/post/:postId" element={<PostDetail />} />
         <Route path="/createpost" element={<CreatePost />} />

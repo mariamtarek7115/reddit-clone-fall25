@@ -4,15 +4,18 @@ import Header from "../components/Header";
 import NavigationMenu from "../components/NavigationMenu";
 import PostCard from "../components/PostCard";
 import { AuthContext } from "../context/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import "./Profile.css"; 
 
 const API_BASE = "http://localhost:5000";
 
 const Profile = () => {
   const { user } = useContext(AuthContext);
-  const username = user?.username;
   const location = useLocation();
+  const { username: routeUsername } = useParams();
+
+  // Use route param when viewing other users, otherwise fall back to signed-in user
+  const username = routeUsername || user?.username;
 
   const [sidebarActive, setSidebarActive] = useState("Home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
