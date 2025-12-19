@@ -6,9 +6,19 @@ export default function CommentList({ comments, currentUsername, onDelete, onRep
     return <div className="empty-state">No comments yet.</div>;
   }
 
+  // Build a parent -> children map so replies render under their parent comment
+  const childrenByParentId = comments.reduce((acc, c) => {
+    const parentId = c.parentComment ? String(c.parentComment) : "__root__";
+    if (!acc[parentId]) acc[parentId] = [];
+    acc[parentId].push(c);
+    return acc;
+  }, {});
+
+  const topLevel = childrenByParentId["__root__"] || [];
+
   return (
     <div className="comments-list">
-      {comments.map((c) => (
+      {topLevel.map((c) => (
         <Comment
           key={c._id}
           comment={c}
@@ -16,6 +26,7 @@ export default function CommentList({ comments, currentUsername, onDelete, onRep
           onDelete={onDelete}
           onReply={onReply}
           onVote={onVote}
+          childrenByParentId={childrenByParentId}
         />
       ))}
     </div>

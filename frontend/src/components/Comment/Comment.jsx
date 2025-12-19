@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import "./Comment.css";
 import CommentForm from "./CommentForm";
 
-export default function Comment({ comment, currentUsername, onDelete, onReply, onVote }) {
+export default function Comment({ comment, currentUsername, onDelete, onReply, onVote, childrenByParentId }) {
   const authorName = comment.author?.username || "unknown";
   const canDelete = currentUsername && authorName === currentUsername;
   const [showReply, setShowReply] = useState(false);
+
+  const replies = (childrenByParentId && childrenByParentId[String(comment._id)]) || [];
 
   const handleReplySubmit = async (text) => {
     if (onReply) {
@@ -56,6 +58,22 @@ export default function Comment({ comment, currentUsername, onDelete, onReply, o
       {showReply && (
         <div className="comment-reply-form">
           <CommentForm onSubmit={handleReplySubmit} />
+        </div>
+      )}
+
+      {replies.length > 0 && (
+        <div className="comment-children">
+          {replies.map((child) => (
+            <Comment
+              key={child._id}
+              comment={child}
+              currentUsername={currentUsername}
+              onDelete={onDelete}
+              onReply={onReply}
+              onVote={onVote}
+              childrenByParentId={childrenByParentId}
+            />
+          ))}
         </div>
       )}
     </div>

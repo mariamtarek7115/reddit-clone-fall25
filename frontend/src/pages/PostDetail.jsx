@@ -114,12 +114,8 @@ export default function PostDetail() {
       // Refresh comments to include the new reply in the right place
       await fetchComments();
 
-      // Update post comment count only for top-level comments
-      if (!parentComment) {
-        setPost((prev) =>
-          prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev
-        );
-      }
+      // Backend increments commentsCount for ALL comments (including replies)
+      setPost((prev) => (prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev));
     } catch (e) {
       setError(e.message || "Failed to post comment");
     } finally {
@@ -144,17 +140,12 @@ export default function PostDetail() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to delete comment");
 
-      // Update UI
-      setComments((prev) =>
-        prev.filter((c) => c._id !== commentId)
-      );
+      // Re-fetch comments so nested replies update correctly (and cascade deletes disappear)
+      await fetchComments();
 
-      // Update post comment count
-      setPost((prev) =>
-        prev
-          ? { ...prev, commentsCount: Math.max(0, (prev.commentsCount || 0) - 1) }
-          : prev
-      );
+      // Update post comment count using cascade deletedCount
+      const dec = Number.isFinite(data.deletedCount) ? data.deletedCount : 1;
+      setPost((prev) => (prev ? { ...prev, commentsCount: Math.max(0, (prev.commentsCount || 0) - dec) } : prev));
     } catch (e) {
       setError(e.message || "Failed to delete comment");
     }

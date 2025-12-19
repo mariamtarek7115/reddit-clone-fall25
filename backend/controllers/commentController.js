@@ -124,15 +124,40 @@ exports.deleteComment = async (req, res) => {
       return res.status(403).json({ message: "Not allowed to delete this comment" });
     }
 
-    if (comment.isDeleted) return res.json({ message: "Already deleted" });
+    if (comment.isDeleted) return res.json({ message: "Already deleted", deletedCount: 0, deletedIds: [] });
 
-    comment.isDeleted = true;
-    comment.body = "[deleted]";
-    await comment.save();
+    // Cascade: mark this comment and all descendants as deleted so replies disappear too.
+    const postId = comment.post;
 
-    await Post.findByIdAndUpdate(comment.post, { $inc: { commentsCount: -1 } });
+    const toVisit = [comment._id];
+    const allIds = [];
 
-    res.json({ message: "Comment deleted", comment });
+    while (toVisit.length > 0) {
+      const batch = toVisit.splice(0, 50);
+      allIds.push(...batch);
+
+      const children = await Comment.find({
+        post: postId,
+        parentComment: { $in: batch },
+        isDeleted: false,
+      }).select("_id");
+
+      for (const child of children) {
+        toVisit.push(child._id);
+      }
+    }
+
+    const updateRes = await Comment.updateMany(
+      { _id: { $in: allIds }, isDeleted: false },
+      { $set: { isDeleted: true, body: "[deleted]" } }
+    );
+
+    const deletedCount = updateRes.modifiedCount || 0;
+    if (deletedCount > 0) {
+      await Post.findByIdAndUpdate(postId, { $inc: { commentsCount: -deletedCount } });
+    }
+
+    res.json({ message: "Comment deleted", deletedCount, deletedIds: allIds.map(String) });
   } catch (err) {
     res.status(500).json({ message: err.message || "Failed to delete comment" });
   }

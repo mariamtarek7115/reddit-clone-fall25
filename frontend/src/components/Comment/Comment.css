@@ -70,3 +70,13 @@
   border: 1px solid var(--border);
   color: var(--text);
 }
+
+.comment-children {
+  margin-top: 10px;
+  margin-left: 14px;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
