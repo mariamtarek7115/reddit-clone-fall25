@@ -8,8 +8,9 @@ import { AuthContext } from "../context/AuthContext";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { user } = useContext(AuthContext);
+  const [query, setQuery] = useState(""); // ✅ search state
 
+  const { user } = useContext(AuthContext);
   const username = user?.username || "guest";
 
   const navigate = useNavigate();
@@ -19,18 +20,60 @@ const Header = () => {
       navigate("/createpost");
       return;
     }
+  };
 
-    console.log(`${type} clicked`);
-    // TODO: implement icon-specific actions (open messages, show notifications)
+  // ✅ SEARCH HANDLER (USER + COMMUNITY)
+  const handleSearch = async (e) => {
+    e.preventDefault();
+
+    if (!query.trim()) return;
+
+    // 🔹 USER SEARCH: u/username
+    if (query.startsWith("u/")) {
+      const userName = query.slice(2);
+      navigate(`/u/${userName}`);
+      return;
+    }
+
+    // 🔹 COMMUNITY SEARCH: r/community
+    if (query.startsWith("r/")) {
+      const communityName = query.slice(2);
+      navigate(`/r/${communityName}`);
+      return;
+    }
+
+    // 🔹 FALLBACK: global backend search
+    try {
+      const res = await fetch(
+        `http://localhost:5000/search?q=${query}`
+      );
+      const data = await res.json();
+
+      if (data.communities && data.communities.length > 0) {
+        navigate(`/r/${data.communities[0].name}`);
+      } else if (data.users && data.users.length > 0) {
+        navigate(`/u/${data.users[0].username}`);
+      } else {
+        alert("No results found");
+      }
+    } catch (err) {
+      console.error("Search error:", err);
+    }
   };
 
   return (
     <header className="app-header">
       <div className="header-center">
-        <div className="search-container">
+        {/* 🔍 SEARCH BAR */}
+        <form className="search-container" onSubmit={handleSearch}>
           <span className="search-icon">🔍</span>
-          <input className="search-bar" placeholder={`Search in u/${username}`} />
-        </div>
+          <input
+            className="search-bar"
+            placeholder={`Search in u/${username}`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </form>
       </div>
 
       <div className="header-right">
@@ -41,6 +84,7 @@ const Header = () => {
         >
           💬
         </button>
+
         <button
           className="icon icon-button"
           aria-label="create"
@@ -48,6 +92,7 @@ const Header = () => {
         >
           ➕
         </button>
+
         <button
           className="icon icon-button"
           aria-label="notifications"
