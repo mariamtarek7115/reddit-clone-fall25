@@ -8,7 +8,7 @@ import { AuthContext } from "../context/AuthContext";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [query, setQuery] = useState(""); // ✅ search state
+  const [query, setQuery] = useState(""); 
 
   const { user } = useContext(AuthContext);
   const username = user?.username || "guest";
