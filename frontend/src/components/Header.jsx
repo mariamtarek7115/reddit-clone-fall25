@@ -10,14 +10,10 @@ const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-<<<<<<< HEAD
   const [query, setQuery] = useState(""); // ✅ search state
   const [showResults, setShowResults] = useState(false);
   const [results, setResults] = useState({ users: [], communities: [] });
   const [searchLoading, setSearchLoading] = useState(false);
-=======
-  const [query, setQuery] = useState(""); 
->>>>>>> 064f56a7a8709fc6fe59f46b1f40643851f11e2a
 
   const { user } = useContext(AuthContext);
   const username = user?.username || "guest";
