@@ -10,10 +10,10 @@ const usersRoute = require("./routes/userRoute");
 const communityRoute = require("./routes/communityRoute");
 const postRoute = require("./routes/postRoute");
 const commentRoute = require("./routes/commentRoute");
-const voteRoute = require("./routes/voteRoute");
 const profileRoute = require("./routes/profileRoute");
 const searchRoute = require("./routes/searchRoute");
 const aiRoute = require("./routes/ai");
+const voteRoute = require("./routes/voteRoute");
 
 const app = express();
 

@@ -53,30 +53,71 @@ const Profile = () => {
     }
   }, [location.state]);
 
-  // Handle voting in profile (update local state)
-  const handleVote = (postId, voteType) => {
-    // Update posts in the current tab
-    if (activeTab === "Posts") {
-      setPosts(prev => prev.map(post => {
-        if (post._id === postId || post.id === postId) {
-          let newUpvotes = post.upvotes || 0;
-          let newState = voteType;
-          
-          if (post.voteState === voteType) {
-            newUpvotes = voteType === "up" ? newUpvotes - 1 : newUpvotes + 1;
-            newState = null;
-          } else if (post.voteState === null) {
-            newUpvotes = voteType === "up" ? newUpvotes + 1 : newUpvotes - 1;
-          } else {
-            newUpvotes = voteType === "up" ? newUpvotes + 2 : newUpvotes - 2;
-          }
-          
-          return { ...post, upvotes: newUpvotes, voteState: newState };
-        }
-        return post;
-      }));
+  // Handle voting in profile: call backend and update local state arrays
+  const handleVote = async (postId, voteType) => {
+    const userId = user?._id;
+    if (!userId) {
+      alert("You must be logged in to vote.");
+      return;
     }
-    // Similarly handle upvoted/downvoted posts
+
+    const value = voteType === "up" ? 1 : -1;
+
+    try {
+      const res = await fetch(`${API_BASE}/votes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, targetType: "Post", targetId: postId, value }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Vote failed");
+        return;
+      }
+
+      // Build an updated post object (try to reuse existing data when available)
+      const findIn = (arr) => (Array.isArray(arr) ? arr.find((p) => p._id === postId || p.id === postId) : undefined);
+      const existing = findIn(posts) || findIn(upvoted.posts) || findIn(downvoted.posts) || { _id: postId };
+      const updatedPost = { ...existing, _id: postId, id: postId, upvotes: data.upvotes, voteState: data.voteState };
+
+      // Update main posts list
+      setPosts((prev) => prev.map((p) => (p._id === postId || p.id === postId ? updatedPost : p)));
+
+      // Update Upvoted list: include post only when voteState === 'up'
+      setUpvoted((prev) => {
+        const exists = (prev.posts || []).some((p) => p._id === postId || p.id === postId);
+        if (data.voteState === "up") {
+          // add or update
+          const newPosts = exists
+            ? prev.posts.map((p) => (p._id === postId || p.id === postId ? updatedPost : p))
+            : [updatedPost, ...(prev.posts || [])];
+          return { ...prev, posts: newPosts };
+        } else {
+          // remove if present
+          return { ...prev, posts: (prev.posts || []).filter((p) => p._id !== postId && p.id !== postId) };
+        }
+      });
+
+      // Update Downvoted list: include post only when voteState === 'down'
+      setDownvoted((prev) => {
+        const exists = (prev.posts || []).some((p) => p._id === postId || p.id === postId);
+        if (data.voteState === "down") {
+          const newPosts = exists
+            ? prev.posts.map((p) => (p._id === postId || p.id === postId ? updatedPost : p))
+            : [updatedPost, ...(prev.posts || [])];
+          return { ...prev, posts: newPosts };
+        } else {
+          return { ...prev, posts: (prev.posts || []).filter((p) => p._id !== postId && p.id !== postId) };
+        }
+      });
+
+      // Also update posts shown in Overview (if those are loaded)
+      setPosts((prev) => prev.map((p) => (p._id === postId || p.id === postId ? updatedPost : p)));
+    } catch (err) {
+      console.error("Profile vote error:", err);
+      alert("Failed to vote");
+    }
   };
 
   // Fetch based on tab

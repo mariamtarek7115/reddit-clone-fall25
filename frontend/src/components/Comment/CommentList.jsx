@@ -1,7 +1,7 @@
 import React from "react";
 import Comment from "./Comment";
 
-export default function CommentList({ comments, currentUsername, onDelete }) {
+export default function CommentList({ comments, currentUsername, onDelete, onReply, onVote }) {
   if (!comments || comments.length === 0) {
     return <div className="empty-state">No comments yet.</div>;
   }
@@ -14,6 +14,8 @@ export default function CommentList({ comments, currentUsername, onDelete }) {
           comment={c}
           currentUsername={currentUsername}
           onDelete={onDelete}
+          onReply={onReply}
+          onVote={onVote}
         />
       ))}
     </div>

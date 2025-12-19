@@ -71,7 +71,7 @@ export default function PostDetail() {
     setError("");
 
     try {
-      const res = await fetch(`${API_BASE}/comments/post/${postId}?parent=null`);
+      const res = await fetch(`${API_BASE}/comments/post/${postId}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to load comments");
 
@@ -86,11 +86,10 @@ export default function PostDetail() {
 
   useEffect(() => {
     fetchComments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
-  // -------- Create Comment (use userId!) --------
-  const createComment = async (text) => {
+  // -------- Create Comment (supports replies via parentComment) --------
+  const createComment = async (text, parentComment = null) => {
     if (!currentUserId) {
       setError("You must be logged in to comment.");
       return;
@@ -100,25 +99,27 @@ export default function PostDetail() {
     setError("");
 
     try {
+      const bodyPayload = { postId, userId: currentUserId, body: text };
+      if (parentComment) bodyPayload.parentComment = parentComment;
+
       const res = await fetch(`${API_BASE}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          postId,
-          userId: currentUserId,     // ✅ use ID
-          body: text,
-          parentComment: null,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to post comment");
 
-      setComments((prev) => [data.comment, ...prev]);
+      // Refresh comments to include the new reply in the right place
+      await fetchComments();
 
-      setPost((prev) =>
-        prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev
-      );
+      // Update post comment count only for top-level comments
+      if (!parentComment) {
+        setPost((prev) =>
+          prev ? { ...prev, commentsCount: (prev.commentsCount || 0) + 1 } : prev
+        );
+      }
     } catch (e) {
       setError(e.message || "Failed to post comment");
     } finally {
@@ -126,7 +127,7 @@ export default function PostDetail() {
     }
   };
 
-  // -------- Delete Comment (author-only via userId) --------
+  // -------- Delete Comment --------
   const deleteComment = async (commentId) => {
     if (!currentUserId) return;
 
@@ -136,21 +137,19 @@ export default function PostDetail() {
     setError("");
 
     try {
-      const res = await fetch(
-        `${API_BASE}/comments/${commentId}?userId=${encodeURIComponent(currentUserId)}`,
-        { method: "DELETE" }
-      );
+      const res = await fetch(`${API_BASE}/comments/${commentId}?userId=${encodeURIComponent(currentUserId)}`, {
+        method: "DELETE",
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to delete comment");
 
-      // soft-delete in UI
+      // Update UI
       setComments((prev) =>
-        prev.map((c) =>
-          c._id === commentId ? { ...c, isDeleted: true, body: "[deleted]" } : c
-        )
+        prev.filter((c) => c._id !== commentId)
       );
 
+      // Update post comment count
       setPost((prev) =>
         prev
           ? { ...prev, commentsCount: Math.max(0, (prev.commentsCount || 0) - 1) }
@@ -158,6 +157,71 @@ export default function PostDetail() {
       );
     } catch (e) {
       setError(e.message || "Failed to delete comment");
+    }
+  };
+
+  // -------- Post Voting --------
+  const handlePostVote = async (postId, voteType) => {
+    if (!currentUserId) {
+      alert("You must be logged in to vote.");
+      return;
+    }
+
+    const value = voteType === "up" ? 1 : -1;
+
+    try {
+      const res = await fetch(`${API_BASE}/votes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUserId,
+          targetType: "Post",
+          targetId: postId,
+          value,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Vote failed");
+        return;
+      }
+
+      // Update the post in state
+      setPost((prev) => (prev ? { ...prev, upvotes: data.upvotes, voteState: data.voteState } : prev));
+    } catch (error) {
+      console.error("Vote error:", error);
+      alert("Failed to vote");
+    }
+  };
+
+  // -------- Comment Voting --------
+  const handleCommentVote = async (commentId, voteType) => {
+    if (!currentUserId) {
+      alert("You must be logged in to vote.");
+      return;
+    }
+
+    const value = voteType === "up" ? 1 : -1;
+
+    try {
+      const res = await fetch(`${API_BASE}/votes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUserId, targetType: "Comment", targetId: commentId, value }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Vote failed");
+        return;
+      }
+
+      // Update the comment in state
+      setComments((prev) => prev.map((c) => (c._id === commentId ? { ...c, upvotes: data.upvotes, voteState: data.voteState } : c)));
+    } catch (err) {
+      console.error("Comment vote error:", err);
+      alert("Failed to vote on comment");
     }
   };
 
@@ -169,7 +233,7 @@ export default function PostDetail() {
       ...post,
       id: post._id,
       subreddit: post.community?.name ? `r/${post.community.name}` : "r/general",
-      body: post.body || post.content || post.text || "",
+      body: post.body || "",
       mediaUrl: post.mediaUrl,
       image: post.mediaUrl,
     };
@@ -195,15 +259,23 @@ export default function PostDetail() {
           {loadingPost ? (
             <div className="postdetail-loading">Loading post...</div>
           ) : postForCard ? (
-            <PostCard post={postForCard} showCommunity={true} showFullContent={true} />
+            <PostCard 
+              post={postForCard} 
+              showCommunity={true} 
+              showFullContent={true}
+              onVote={handlePostVote}
+            />
           ) : (
             <div className="postdetail-empty">Post not found.</div>
           )}
 
-          <CommentForm disabled={!currentUserId || submitting} onSubmit={createComment} />
+          <CommentForm 
+            disabled={!currentUserId || submitting} 
+            onSubmit={createComment} 
+          />
 
           <div className="comments-header">
-            <h3>Comments</h3>
+            <h3>Comments ({post?.commentsCount || 0})</h3>
             <button onClick={fetchComments} disabled={loadingComments}>
               {loadingComments ? "Refreshing..." : "Refresh"}
             </button>
@@ -213,10 +285,12 @@ export default function PostDetail() {
             <div className="postdetail-loading">Loading comments...</div>
           ) : (
             <CommentList
-              comments={comments}
-              currentUsername={currentUsername}
-              onDelete={deleteComment}
-            />
+                comments={comments}
+                currentUsername={currentUsername}
+                onDelete={deleteComment}
+                onReply={createComment}
+                onVote={handleCommentVote}
+              />
           )}
         </div>
       </main>

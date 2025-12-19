@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState, useRef } from "react";
 import Sidebar from "../components/Sidebar/Sidebar.jsx";
 import Header from "../components/Header.jsx";
 import PostCard from "../components/PostCard.jsx";
@@ -16,7 +16,6 @@ export default function Feed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [debugInfo, setDebugInfo] = useState("");
 
   // COMMUNITIES (fetch from backend)
   const [communities, setCommunities] = useState([]);
@@ -35,7 +34,7 @@ export default function Feed() {
   const sortOptions = ["Best", "Hot", "New", "Top", "Rising"];
   const locationOptions = ["Everywhere", "Nearby", "Custom"];
 
-  // ✅ ONE source of truth for current user (AuthContext)
+  // Current user from AuthContext
   const currentUser = useMemo(() => {
     return { username: user?.username || "guest" };
   }, [user]);
@@ -53,7 +52,6 @@ export default function Feed() {
     const fetchPosts = async () => {
       setLoading(true);
       setErr("");
-      setDebugInfo("Starting fetch...");
 
       try {
         const url = `${API_BASE}/posts?sort=${backendSort}&page=1&limit=50`;
@@ -105,6 +103,8 @@ export default function Feed() {
         }));
 
         setPosts(uiPosts);
+        // initialize display order to the fetched order
+        setDisplayOrder(uiPosts.map((p) => p._id || p.id));
       } catch (e) {
         console.error("🔥 Feed fetch error:", e);
         setErr(e.message || "Something went wrong");
@@ -152,9 +152,31 @@ export default function Feed() {
     return n.toString();
   };
 
-  // local sorting
-  const filteredPosts = useMemo(() => {
-    let list = [...posts];
+  // display order preserved across small local updates (like voting)
+  const [displayOrder, setDisplayOrder] = useState([]);
+  // skip updating displayOrder when we intentionally change posts locally (e.g. after a vote)
+  const skipDisplayOrderUpdateRef = useRef(false);
+
+  // helper: build id -> post map
+  const postsById = useMemo(() => {
+    const m = {};
+    posts.forEach((p) => {
+      const id = p._id || p.id;
+      if (id) m[id] = p;
+    });
+    return m;
+  }, [posts]);
+
+  // When posts or activeSort change (normally due to fetch or user changing sort),
+  // compute a new display order unless we've flagged to skip (local vote update).
+  useEffect(() => {
+    if (skipDisplayOrderUpdateRef.current) {
+      // consume the skip and do not update displayOrder
+      skipDisplayOrderUpdateRef.current = false;
+      return;
+    }
+
+    const list = [...posts];
 
     if (activeSort === "Hot") {
       list.sort((a, b) => b.commentsCount - a.commentsCount);
@@ -173,30 +195,58 @@ export default function Feed() {
       list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    return list;
+    setDisplayOrder(list.map((p) => p._id || p.id));
   }, [posts, activeSort]);
 
-  // Voting handler for PostCard (local UI only)
+  // filteredPosts respects displayOrder and avoids re-sorting on vote actions
+  const filteredPosts = useMemo(() => {
+    if (!displayOrder || displayOrder.length === 0) return posts;
+    return displayOrder.map((id) => postsById[id]).filter(Boolean);
+  }, [displayOrder, postsById, posts]);
+
+  // Post voting handler
   const handlePostVote = async (postId, voteType) => {
-    setPosts((prev) =>
-      prev.map((post) => {
-        if (post.id !== postId && post._id !== postId) return post;
+    const userId = user?._id;
 
-        let newUpvotes = post.upvotes;
-        let newState = voteType;
+    if (!userId) {
+      alert("You must be logged in to vote.");
+      return;
+    }
 
-        if (post.voteState === voteType) {
-          newUpvotes = voteType === "up" ? post.upvotes - 1 : post.upvotes + 1;
-          newState = null;
-        } else if (post.voteState === null) {
-          newUpvotes = voteType === "up" ? post.upvotes + 1 : post.upvotes - 1;
-        } else {
-          newUpvotes = voteType === "up" ? post.upvotes + 2 : post.upvotes - 2;
-        }
+    const value = voteType === "up" ? 1 : -1;
 
-        return { ...post, upvotes: newUpvotes, voteState: newState };
-      })
-    );
+    try {
+      const res = await fetch(`${API_BASE}/votes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          targetType: "Post",
+          targetId: postId,
+          value,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Vote failed");
+        return;
+      }
+
+      // Update UI post from server response (preserve display order)
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId || p.id === postId
+            ? { ...p, upvotes: data.upvotes, voteState: data.voteState }
+            : p
+        )
+      );
+      // prevent re-computing display order for this local update
+      skipDisplayOrderUpdateRef.current = true;
+    } catch (error) {
+      console.error("Vote error:", error);
+      alert("Failed to vote");
+    }
   };
 
   const toggleJoinCommunity = (id) => {
@@ -380,13 +430,12 @@ export default function Feed() {
               {/* Posts using PostCard Component */}
               {!loading && !err && filteredPosts.length > 0 && (
                 <div className="posts-container">
-                  {filteredPosts.map((post, index) => (
+                  {filteredPosts.map((post) => (
                     <PostCard
-                      key={post.id || post._id || index}
+                      key={post._id}
                       post={post}
                       onVote={handlePostVote}
                       showCommunity={true}
-                      showFullContent={false}
                     />
                   ))}
                 </div>

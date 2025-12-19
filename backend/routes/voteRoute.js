@@ -1,13 +1,6 @@
-const express = require("express");
-const router = express.Router();
+const router = require("express").Router();
+const { voteOnTarget } = require("../controllers/voteController");
 
-// Example vote routes (you can adjust later)
-router.post("/upvote", (req, res) => {
-  res.json({ message: "Upvoted" });
-});
-
-router.post("/downvote", (req, res) => {
-  res.json({ message: "Downvoted" });
-});
+router.post("/", voteOnTarget);
 
 module.exports = router;

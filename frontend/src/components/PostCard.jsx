@@ -1,160 +1,88 @@
 import React from "react";
-import "./PostCard.css"; 
 import { useNavigate } from "react-router-dom";
-   
+import Vote from "./Vote";
+import "./PostCard.css";
 
+const API_BASE = "http://localhost:5000";
 
-const PostCard = ({ 
-  post, 
-  onVote, 
+export default function PostCard({
+  post,
+  onVote,
   showCommunity = true,
-  showFullContent = false 
-}) => {
-    const navigate = useNavigate();
+  showFullContent = false,
+}) {
+  const navigate = useNavigate();
+
+  if (!post) return null;
+
   const {
     _id,
-    id,
     title,
     body,
     author,
     community,
-    subreddit,
     upvotes = 0,
     commentsCount = 0,
     voteState = null,
-    image,
     mediaUrl,
     createdAt,
-    type
   } = post;
 
-  const postId = _id || id;
-  const authorName = author?.username || author || "unknown";
-  const communityName = community?.name || subreddit || "general";
+  const postId = _id;
+  const authorName = author?.username || "unknown";
+  const communityName = community?.name || "general";
 
-  // Only show an image when a media URL (uploaded file) or explicit image field is present
-  const postImage = mediaUrl || image || null;
-  const hasImage = !!postImage;
-
-  // if mediaUrl is a server-relative path (e.g. /uploads/...), prefix with backend host
-  const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
-  const postImageSrc = hasImage && typeof postImage === "string" && postImage.startsWith("/uploads")
-    ? `${API_BASE}${postImage}`
-    : hasImage
-    ? postImage
-    : null;
-  const isImage = hasImage;
-
-  
-  const formatNumber = (num) => {
-    const n = Number(num) || 0;
-    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
-    return n;
-  };
-
-  const handleVote = (voteType) => {
-    if (onVote && postId) {
-      onVote(postId, voteType);
-    }
-  };
+  const imageSrc =
+    mediaUrl && mediaUrl.startsWith("/uploads")
+      ? `${API_BASE}${mediaUrl}`
+      : mediaUrl;
 
   return (
-    <article className="post-card post-card--profile">
+    <article className="post-card">
       {/* Header */}
       <div className="post-card-header">
         <div className="post-card-header-left">
-          {showCommunity && (
-            <>
-              <span className="post-card-community">r/{communityName}</span>
-              <span className="post-card-dot">•</span>
-            </>
-          )}
-          <span className="post-card-author">u/{authorName}</span>
+          {showCommunity && <span>r/{communityName}</span>}
+          <span>u/{authorName}</span>
           {createdAt && (
-            <>
-              <span className="post-card-dot">•</span>
-              <span className="post-card-time">
-                {new Date(createdAt).toLocaleDateString()}
-              </span>
-            </>
+            <span>{new Date(createdAt).toLocaleDateString()}</span>
           )}
         </div>
-        <button className="post-card-more" title="More">
-          •••
-        </button>
       </div>
 
       {/* Title */}
       <h3 className="post-card-title">{title}</h3>
 
-      {/* Body - Show full content if specified */}
+      {/* Body */}
       {body && (
-        <div className="post-card-body">
-          <p className={`post-card-content ${showFullContent ? "" : "post-card-content--preview"}`}>
-            {showFullContent ? body : (body.length > 200 ? body.slice(0, 200) + "..." : body)}
-          </p>
-          {!showFullContent && body.length > 200 && (
-            <button className="post-card-read-more">Read more</button>
-          )}
-        </div>
+        <p className="post-card-content">
+          {showFullContent ? body : body.slice(0, 200)}
+          {!showFullContent && body.length > 200 && "..."}
+        </p>
       )}
 
-      {/* Media/Image */}
-      {isImage && (
+      {/* Image */}
+      {imageSrc && (
         <div className="post-card-media">
-          <img 
-            src={postImageSrc} 
-            alt={title}
-            className="post-card-image"
-            loading="lazy"
-          />
+          <img src={imageSrc} alt={title} />
         </div>
       )}
 
       {/* Actions */}
       <div className="post-card-actions">
-        <div className={`vote-pill ${voteState === "up" ? "vote-pill--up" : voteState === "down" ? "vote-pill--down" : ""}`}>
-          <button
-            className={`vote-btn ${voteState === "up" ? "vote-btn--active" : ""}`}
-            onClick={() => handleVote("up")}
-            aria-label="Upvote"
-          >
-            ▲
-          </button>
-          <span className="vote-count">
-            {formatNumber(upvotes)}
-          </span>
-          <button
-            className={`vote-btn ${voteState === "down" ? "vote-btn--active" : ""}`}
-            onClick={() => handleVote("down")}
-            aria-label="Downvote"
-          >
-            ▼
-          </button>
-        </div>
+        <Vote
+          score={upvotes}
+          voteState={voteState}
+          onVote={(type) => onVote(postId, type)}
+        />
 
-        <button
-  className="post-card-action-btn"
-  onClick={() => navigate(`/post/${postId}`)}
->
-  <span className="post-card-action-icon">💬</span>
-  <span className="post-card-action-text">
-    {formatNumber(commentsCount)} Comments
-  </span>
-</button>
-        
-        <button className="post-card-action-btn">
-          <span className="post-card-action-icon">↗</span>
-          <span className="post-card-action-text">Share</span>
-        </button>
-        
-        <button className="post-card-action-btn">
-          <span className="post-card-action-icon">🔖</span>
-          <span className="post-card-action-text">Save</span>
+        <button 
+          className="comments-btn"
+          onClick={() => navigate(`/post/${postId}`)}
+        >
+          💬 {commentsCount} Comments
         </button>
       </div>
     </article>
   );
-};
-
-export default PostCard;
+}
