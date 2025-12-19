@@ -9,6 +9,7 @@ const postRoute = require("./routes/postRoute");
 const commentRoute = require("./routes/commentRoute");
 const voteRoute = require("./routes/voteRoute");
 const profileRoute = require("./routes/profileRoute");
+const searchRoute = require("./routes/searchRoute");
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use("/posts", postRoute);
 app.use("/comments", commentRoute);
 app.use("/votes", voteRoute);
 app.use("/community", communityRoute);
+app.use("/search", searchRoute);
 
 // Start server
 app.listen(5000, () => {
