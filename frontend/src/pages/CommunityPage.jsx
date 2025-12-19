@@ -1,12 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Sidebar from "../components/Sidebar/Sidebar";
+import Header from "../components/Header.jsx";
+import Sidebar from "../components/Sidebar/Sidebar.jsx";
 import "./CommunityPage.css";
 
 const CommunityPage = () => {
   const { communityName } = useParams();
   const navigate = useNavigate();
+
+  // Sidebar state (REQUIRED for your Sidebar component)
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarActive, setSidebarActive] = useState("Home");
+
+  // Communities list (dummy for now; hook backend later)
+  const [communities, setCommunities] = useState([
+    { id: 1, name: "JavaScript" },
+    { id: 2, name: "ReactJS" },
+  ]);
+
+  const toggleJoinCommunity = (id) => {
+    setCommunities((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, isJoined: !c.isJoined } : c))
+    );
+  };
 
   const [community, setCommunity] = useState(null);
   const [sortBy, setSortBy] = useState("hot");
@@ -15,13 +31,14 @@ const CommunityPage = () => {
   useEffect(() => {
     if (!communityName) return;
 
+    // later: fetch community from backend by name
     setCommunity({
       name: communityName,
       description: `Welcome to r/${communityName}!`,
       membersCount: 1,
       createdAt: "Dec 19, 2025",
       type: "Public",
-      isAdult: true,
+      isAdult: false,
       isModerator: true,
       insights: {
         visitors: 0,
@@ -38,7 +55,20 @@ const CommunityPage = () => {
 
       <div className="reddit-shell">
         {/* LEFT GLOBAL NAV */}
-        <Sidebar />
+        <Sidebar
+          sidebarActive={sidebarActive}
+          setSidebarActive={setSidebarActive}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          toggleJoinCommunity={toggleJoinCommunity}
+          communities={communities.map((c) => ({
+            ...c,
+            // Sidebar expects strings like "r/JavaScript" in UI,
+            // but it also uses navigate("/community/" + community.name)
+            // so we should keep just the name here.
+            name: c.name,
+          }))}
+        />
 
         {/* COMMUNITY PAGE */}
         <div className="community-page">
@@ -70,7 +100,7 @@ const CommunityPage = () => {
                 <div className="menu-wrapper">
                   <button
                     className="more-btn"
-                    onClick={() => setShowMenu(prev => !prev)}
+                    onClick={() => setShowMenu((prev) => !prev)}
                   >
                     ⋯
                   </button>
@@ -93,7 +123,7 @@ const CommunityPage = () => {
             {/* FEED */}
             <main className="community-feed">
               <div className="sort-bar">
-                {["hot", "new", "top"].map(type => (
+                {["hot", "new", "top"].map((type) => (
                   <button
                     key={type}
                     className={sortBy === type ? "active" : ""}
@@ -140,9 +170,7 @@ const CommunityPage = () => {
 
                 <button
                   className="primary-cta full"
-                  onClick={() =>
-                    navigate(`/r/${community.name}/message-mods`)
-                  }
+                  onClick={() => navigate(`/community/${community.name}/message-mods`)}
                 >
                   Message Mods
                 </button>
@@ -154,7 +182,7 @@ const CommunityPage = () => {
                   <div className="mod-row">u/Former_Pack5559</div>
                   <button
                     className="link-btn"
-                    onClick={() => navigate(`/r/${community.name}/mods`)}
+                    onClick={() => navigate(`/community/${community.name}/mods`)}
                   >
                     View all moderators
                   </button>
