@@ -64,7 +64,7 @@ export default function PostCard({
       {/* Image */}
       {imageSrc && (
         <div className="post-card-media">
-          <img src={imageSrc} alt={title} />
+          <img className="post-card-image" src={imageSrc} alt={title} />
         </div>
       )}
 
