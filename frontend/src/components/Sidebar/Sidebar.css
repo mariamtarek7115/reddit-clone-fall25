@@ -1,0 +1,111 @@
+
+/* Sidebar */
+.feed-sidebar {
+  width: 256px;
+  background-color: var(--bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.feed-sidebar--collapsed {
+  width: 64px;
+}
+
+.sidebar-header {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* If you use this wrapper on profile page */
+.profile-page {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  background-color: var(--bg);
+}
+
+.sidebar-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 0 8px;
+  overflow-y: auto;
+}
+
+.sidebar-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-nav-item:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--card);
+  color: var(--text);
+}
+
+.sidebar-badge {
+  padding: 2px 6px;
+  margin-left: auto;
+  background-color: var(--accent);
+  font-size: 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sidebar-section-title {
+  margin-top: 24px;
+  margin-bottom: 8px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-toggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+}

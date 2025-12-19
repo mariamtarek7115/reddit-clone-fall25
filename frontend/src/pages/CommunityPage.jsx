@@ -1,255 +1,170 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import './CommunityPage.css';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import Sidebar from "../components/Sidebar/Sidebar";
+import "./CommunityPage.css";
 
 const CommunityPage = () => {
   const { communityName } = useParams();
-  const [community, setCommunity] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [isMember, setIsMember] = useState(true); // Creator is automatically a member
-  const [sortBy, setSortBy] = useState('hot');
+  const navigate = useNavigate();
 
-  // Mock data - replace with actual API calls later
+  const [community, setCommunity] = useState(null);
+  const [sortBy, setSortBy] = useState("hot");
+  const [showMenu, setShowMenu] = useState(false);
+
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const currentDate = new Date();
-      const createdDate = currentDate.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-      
-      setCommunity({
-        name: communityName,
-        displayName: communityName.charAt(0).toUpperCase() + communityName.slice(1),
-        description: `Welcome to r/${communityName}! This is a community about ${communityName}.`,
-        membersCount: 1, // Starts with just the creator
-        createdAt: createdDate,
-        type: 'public',
-        isAdult: false,
-        isModerator: true, // Creator is moderator
-        insights: {
-          visitors: 0,
-          contributions: 0
-        }
-      });
-      
-      setPosts([]); // Empty posts for new community
-      setIsMember(true); // Creator is automatically joined
-    }, 500);
+    if (!communityName) return;
+
+    setCommunity({
+      name: communityName,
+      description: `Welcome to r/${communityName}!`,
+      membersCount: 1,
+      createdAt: "Dec 19, 2025",
+      type: "Public",
+      isAdult: true,
+      isModerator: true,
+      insights: {
+        visitors: 0,
+        contributions: 0,
+      },
+    });
   }, [communityName]);
 
-  const handleJoinLeave = () => {
-    setIsMember(!isMember);
-    // TODO: API call to join/leave community
-  };
-
-  const createPost = () => {
-    // TODO: Redirect to create post page
-    alert('Redirect to create post page');
-  };
-
-  if (!community) {
-    return (
-      <div className="community-page">
-        <div className="loading">Loading community...</div>
-      </div>
-    );
-  }
+  if (!community) return <div className="loading">Loading…</div>;
 
   return (
-    <div className="community-page">
-      {/* Community Banner */}
-      <div className="community-banner">
-        <div className="banner-content">
-          <div className="community-icon">r/</div>
-          <div className="community-titles">
-            <h1>r/{community.name}</h1>
-            <span className="community-display-name">{community.displayName}</span>
-          </div>
-        </div>
-      </div>
+    <>
+      <Header />
 
-      <div className="community-layout">
-        {/* Main Content */}
-        <div className="community-main">
-          {/* Create Post Card */}
-          <div className="create-post-card">
-            <div className="user-avatar-small"></div>
-            <input 
-              type="text" 
-              placeholder="Create Post" 
-              className="create-post-input"
-              onClick={createPost}
-              readOnly
-            />
-            <div className="post-options">
-              <button className="media-btn" title="Media">📷</button>
-              <button className="link-btn" title="Link">🔗</button>
+      <div className="reddit-shell">
+        {/* LEFT GLOBAL NAV */}
+        <Sidebar />
+
+        {/* COMMUNITY PAGE */}
+        <div className="community-page">
+          {/* BANNER */}
+          <div className="community-banner" />
+
+          {/* HEADER */}
+          <div className="community-header">
+            <div className="community-header-inner">
+              <div className="community-icon">r/</div>
+
+              <div className="community-header-text">
+                <h1>r/{community.name}</h1>
+                <span>Created {community.createdAt}</span>
+              </div>
+
+              <div className="community-header-actions">
+                <button
+                  className="create-post-btn"
+                  onClick={() => navigate("/createpost")}
+                >
+                  + Create Post
+                </button>
+
+                {community.isModerator && (
+                  <button className="mod-tools-btn">Mod Tools</button>
+                )}
+
+                <div className="menu-wrapper">
+                  <button
+                    className="more-btn"
+                    onClick={() => setShowMenu(prev => !prev)}
+                  >
+                    ⋯
+                  </button>
+
+                  {showMenu && (
+                    <div className="community-menu">
+                      <button>Add to custom feed</button>
+                      <button>Add to favorites</button>
+                      <button>Mute r/{community.name}</button>
+                      <button className="danger">Leave</button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Posts Sorting */}
-          <div className="posts-sorting">
-            <button 
-              className={`sort-btn ${sortBy === 'hot' ? 'active' : ''}`}
-              onClick={() => setSortBy('hot')}
-            >
-              Hot
-            </button>
-            <button 
-              className={`sort-btn ${sortBy === 'new' ? 'active' : ''}`}
-              onClick={() => setSortBy('new')}
-            >
-              New
-            </button>
-            <button 
-              className={`sort-btn ${sortBy === 'top' ? 'active' : ''}`}
-              onClick={() => setSortBy('top')}
-            >
-              Top
-            </button>
-          </div>
+          {/* CONTENT */}
+          <div className="community-content">
+            {/* FEED */}
+            <main className="community-feed">
+              <div className="sort-bar">
+                {["hot", "new", "top"].map(type => (
+                  <button
+                    key={type}
+                    className={sortBy === type ? "active" : ""}
+                    onClick={() => setSortBy(type)}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
 
-          {/* Posts Area */}
-          <div className="posts-area">
-            {posts.length === 0 ? (
-              <div className="no-posts">
-                <div className="no-posts-icon">📝</div>
-                <h3>This community doesn't have any posts yet</h3>
+              <div className="empty-feed">
+                <h2>This community doesn’t have any posts yet</h2>
                 <p>Make one and get this feed started.</p>
-                <button className="create-first-post-btn" onClick={createPost}>
+                <button
+                  className="primary-cta"
+                  onClick={() => navigate("/createpost")}
+                >
                   Create Post
                 </button>
               </div>
-            ) : (
-              posts.map(post => (
-                <div key={post.id} className="post-card">
-                  {/* Post content will go here */}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+            </main>
 
-        {/* Sidebar - Creator/MOD View */}
-        <div className="community-sidebar">
-          {/* About Community Card */}
-          <div className="about-community-card">
-            <div className="about-header">
-              <h3>About Community</h3>
-            </div>
-            
-            <div className="community-description">
-              {community.description}
-            </div>
+            {/* RIGHT SIDEBAR */}
+            <aside className="community-right">
+              <div className="about-card">
+                <h3>About Community</h3>
+                <p>{community.description}</p>
 
-            <div className="community-stats">
-              <div className="stat">
-                <strong>{community.membersCount.toLocaleString()}</strong>
-                <span>Members</span>
-              </div>
-              <div className="stat">
-                <strong>1</strong>
-                <span>Online</span>
-              </div>
-            </div>
-
-            <div className="community-info">
-              <div className="info-item">
-                <span className="info-icon">📅</span>
-                <span>Created {community.createdAt}</span>
-              </div>
-              <div className="info-item">
-                <span className="info-icon">🌐</span>
-                <span>{community.type.charAt(0).toUpperCase() + community.type.slice(1)}</span>
-              </div>
-              {community.isAdult && (
-                <div className="info-item">
-                  <span className="info-icon">🔞</span>
-                  <span>Adult content</span>
-                </div>
-              )}
-            </div>
-
-            <div className="community-actions">
-              <button className="create-post-sidebar-btn" onClick={createPost}>
-                Create Post
-              </button>
-            </div>
-
-            {/* Insights Section */}
-            <div className="insights-section">
-              <div className="insights-header">
-                <h4>Insights</h4>
-                <span className="insights-period">Past week ›</span>
-              </div>
-              <div className="insights-stats">
-                <div className="insight-stat">
-                  <strong>{community.insights.visitors}</strong>
-                  <span>Visitors</span>
-                </div>
-                <div className="insight-stat">
-                  <strong>{community.insights.contributions}</strong>
-                  <span>Contributions</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Moderator Section - Only show for creator */}
-            {community.isModerator && (
-              <div className="moderator-section">
-                <div className="moderator-header">
-                  <h4>MODERATORS</h4>
-                </div>
-                <div className="moderator-actions">
-                  <button className="mod-action-btn">
-                    <span className="mod-action-icon">✉️</span>
-                    Message Mods
-                  </button>
-                  <button className="mod-action-btn">
-                    <span className="mod-action-icon">👥</span>
-                    Invite Mod
-                  </button>
-                </div>
-                <div className="moderator-list">
-                  <div className="moderator">
-                    <span className="mod-avatar"></span>
-                    <span>u/YourUsername</span>
-                    <span className="mod-badge">MOD</span>
+                <div className="stats">
+                  <div>
+                    <strong>{community.membersCount}</strong>
+                    <span>Members</span>
+                  </div>
+                  <div>
+                    <strong>1</strong>
+                    <span>Online</span>
                   </div>
                 </div>
-                <button className="view-moderators-btn">View all moderators</button>
-              </div>
-            )}
 
-            {/* Community Settings - Only for creator/mods */}
-            {community.isModerator && (
-              <div className="community-settings-card">
-                <h4>COMMUNITY SETTINGS</h4>
-                <div className="settings-options">
-                  <button className="settings-btn">Community Appearance</button>
-                  <button className="settings-btn">Edit Widgets</button>
-                  <button className="settings-btn">Moderation Tools</button>
-                  <button className="settings-btn">Community Guidelines</button>
+                <div className="info">
+                  <span>🌐 {community.type}</span>
+                  {community.isAdult && <span>🔞 Adult content</span>}
                 </div>
-              </div>
-            )}
-          </div>
 
-          {/* Resources Card */}
-          <div className="resources-card">
-            <h4>RESOURCES</h4>
-            <div className="resources-list">
-              <button className="resource-btn">Create Post</button>
-              <button className="resource-btn">Community Guidelines</button>
-              <button className="resource-btn">Moderation Tools</button>
-            </div>
+                <button
+                  className="primary-cta full"
+                  onClick={() =>
+                    navigate(`/r/${community.name}/message-mods`)
+                  }
+                >
+                  Message Mods
+                </button>
+              </div>
+
+              {community.isModerator && (
+                <div className="mod-card">
+                  <h4>MODERATORS</h4>
+                  <div className="mod-row">u/Former_Pack5559</div>
+                  <button
+                    className="link-btn"
+                    onClick={() => navigate(`/r/${community.name}/mods`)}
+                  >
+                    View all moderators
+                  </button>
+                </div>
+              )}
+            </aside>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

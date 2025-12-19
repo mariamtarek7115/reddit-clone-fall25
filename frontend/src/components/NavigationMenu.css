@@ -1,0 +1,23 @@
+.navigation-menu {
+  display: flex;
+  gap: 30px;
+  border-bottom: 1px solid #ccc;
+  padding: 15px 0;
+  font-weight: 500;
+}
+
+.nav-item {
+  cursor: pointer;
+  padding: 10px 0;
+  color: #555;
+  transition: color 0.2s, border-bottom 0.2s;
+}
+
+.nav-item:hover {
+  color: #000;
+}
+
+.nav-item.active {
+  color: #ff4500; /* Reddit-style orange for active tab */
+  border-bottom: 2px solid #ff4500;
+}

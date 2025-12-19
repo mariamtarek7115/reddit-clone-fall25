@@ -1,0 +1,138 @@
+/* Page wrapper (add className="auth-page" around login_main in Login.jsx) */
+.auth-page {
+  min-height: 100vh;
+  padding: 40px 16px;
+  background: var(--card);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+/* Main login card */
+.login_main {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px 40px 40px;
+
+  background: var(--card2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+}
+
+/* Titles */
+.login_main h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.login_main h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Intro text */
+.login_main .intro {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Form layout */
+.login_main form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Inputs */
+.login_main input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.login_main input::placeholder {
+  color: var(--muted);
+}
+
+.login_main input:focus {
+  border-color: var(--blue);
+  background: var(--bg);
+}
+
+/* Error text */
+.error_text {
+  font-size: 13px;
+  color: #d00000;
+  margin-top: -8px;
+  margin-bottom: 12px;
+}
+
+/* Button */
+.login_main button {
+  width: 100%;
+  padding: 12px 14px;
+
+  border-radius: 999px;
+  border: none;
+
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  background: var(--accent);
+  color: #fff;
+  transition: opacity 0.15s ease;
+}
+
+.login_main button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.login_main button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Bottom text */
+.login_main .ending {
+  margin-top: 24px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* Link back to signup */
+.signup_link {
+  color: var(--accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.signup_link:hover {
+  text-decoration: underline;
+}
+
+/* Small screens */
+@media (max-width: 520px) {
+  .login_main {
+    padding: 28px 20px 28px;
+  }
+}

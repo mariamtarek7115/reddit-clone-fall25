@@ -1,0 +1,238 @@
+/* Post Card */
+.post-card {
+  background-color: var(--card);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.post-card--profile {
+  margin-bottom: 20px;
+}
+
+/* Header */
+.post-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.post-card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.post-card-community {
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.post-card-community:hover {
+  text-decoration: underline;
+}
+
+.post-card-author {
+  cursor: pointer;
+}
+
+.post-card-author:hover {
+  text-decoration: underline;
+}
+
+.post-card-dot {
+  opacity: 0.5;
+}
+
+.post-card-time {
+  font-size: 12px;
+}
+
+.post-card-more {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.post-card-more:hover {
+  background-color: var(--hover);
+}
+
+/* Title */
+.post-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* Body */
+.post-card-body {
+  margin-bottom: 16px;
+}
+
+.post-card-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.post-card-content--preview {
+  max-height: 84px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.post-card-read-more {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.post-card-read-more:hover {
+  text-decoration: underline;
+}
+
+/* Media */
+.post-card-media {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.post-card-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Actions */
+.post-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.post-card-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: background-color 0.2s ease;
+}
+
+.post-card-action-btn:hover {
+  background-color: var(--hover);
+  color: var(--text);
+}
+
+.post-card-action-icon {
+  font-size: 16px;
+}
+
+.post-card-action-text {
+  font-weight: 500;
+}
+
+/* Voting Pill (updated) */
+.vote-pill {
+  display: flex;
+  align-items: center;
+  background-color: var(--pill);
+  border-radius: 20px;
+  padding: 4px 12px;
+  gap: 8px;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.vote-pill--up {
+  background-color: rgba(255, 69, 0, 0.1);
+  border-color: rgba(255, 69, 0, 0.3);
+  color: #ff4500;
+}
+
+.vote-pill--down {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.vote-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.vote-btn--active {
+  font-weight: 700;
+}
+
+.vote-count {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .post-card {
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .post-card-title {
+    font-size: 16px;
+  }
+  
+  .post-card-actions {
+    gap: 12px;
+  }
+  
+  .post-card-action-text {
+    display: none;
+  }
+}
