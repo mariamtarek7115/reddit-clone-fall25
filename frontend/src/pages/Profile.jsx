@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import NavigationMenu from "../components/NavigationMenu";
 import PostCard from "../components/PostCard";
 import { AuthContext } from "../context/AuthContext";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import "./Profile.css"; 
 
 const API_BASE = "http://localhost:5000";
@@ -12,6 +12,7 @@ const API_BASE = "http://localhost:5000";
 const Profile = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
+  const navigate = useNavigate();
   const { username: routeUsername } = useParams();
 
   // Use route param when viewing other users, otherwise fall back to signed-in user
@@ -22,6 +23,9 @@ const Profile = () => {
 
   // Tabs
   const [activeTab, setActiveTab] = useState(location.state?.tab || "Overview");
+
+  // Drafts state
+  const [drafts, setDrafts] = useState([]);
 
   // Sidebar dummy communities
   const [communities, setCommunities] = useState([
@@ -52,6 +56,20 @@ const Profile = () => {
       setActiveTab(location.state.tab);
     }
   }, [location.state]);
+
+  // Load drafts when Drafts tab activated
+  useEffect(() => {
+    if (activeTab !== 'Drafts') return;
+    const key = `drafts_${user ? user._id : 'guest'}`;
+    try {
+      const raw = localStorage.getItem(key);
+      const arr = raw ? JSON.parse(raw) : [];
+      setDrafts(arr);
+    } catch (err) {
+      console.error('Failed to load drafts', err);
+      setDrafts([]);
+    }
+  }, [activeTab, user]);
 
   // Handle voting in profile (update local state)
   const handleVote = (postId, voteType) => {
@@ -183,7 +201,7 @@ const Profile = () => {
         </div>
 
         {/* Navigation Menu */}
-        <NavigationMenu onTabChange={handleTabChange} activeTab={activeTab} />
+        <NavigationMenu onTabChange={handleTabChange} activeTab={activeTab} tabs={["Overview","Posts","Comments","Upvoted","Downvoted","Drafts"]} />
 
         {/* Tab Content */}
         <div className="profile-content">
@@ -197,6 +215,82 @@ const Profile = () => {
           {error && (
             <div className="profile-error">
               <p>Error: {error}</p>
+            </div>
+          )}
+
+          {/* Drafts handling */}
+          {activeTab === 'Drafts' && (
+            <div className="tab-drafts">
+              <h2 className="section-title">Drafts</h2>
+              {drafts.length === 0 ? (
+                <div className="empty-state">
+                  <p>No drafts yet.</p>
+                </div>
+              ) : (
+                <div className="drafts-list">
+                  {drafts.map((d) => (
+                    <div key={d.id} className="draft-card">
+                      <h3>{d.title || '(No title)'}</h3>
+                      <div style={{ color: '#666' }}>{d.community?.name ? `r/${d.community.name}` : 'No community'}</div>
+                      <p style={{ marginTop: 8 }}>{d.body}</p>
+                      {d.imageData && (
+                        <img src={d.imageData} alt="draft" style={{ maxWidth: 320, marginTop: 8 }} />
+                      )}
+
+                      <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                        <button className="primary-cta" onClick={() => {
+                          // Edit draft: navigate to create post and pre-fill via state
+                          navigate('/createpost', { state: { draftToEdit: d } });
+                        }}>Edit</button>
+
+                        <button className="save-draft" onClick={async () => {
+                          // Publish draft: attempt to POST like CreatePost
+                          try {
+                            const formData = new FormData();
+                            formData.append('title', d.title || '');
+                            formData.append('authorId', user._id);
+                            if (d.body) formData.append('body', d.body);
+                            if (d.url) formData.append('url', d.url);
+                            if (d.community?._id) formData.append('communityId', d.community._id);
+                            if (d.imageData) {
+                              // Convert data URL back to blob
+                              const res = await fetch(d.imageData);
+                              const blob = await res.blob();
+                              formData.append('image', blob, 'draft-image.png');
+                            }
+
+                            const res = await fetch(`${API_BASE}/posts`, { method: 'POST', body: formData });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.message || 'Failed to publish');
+
+                            // On success remove draft
+                            const key = `drafts_${user ? user._id : 'guest'}`;
+                            const storedRaw = localStorage.getItem(key);
+                            const arr = storedRaw ? JSON.parse(storedRaw) : [];
+                            const updated = arr.filter(item => item.id !== d.id);
+                            localStorage.setItem(key, JSON.stringify(updated));
+                            setDrafts(updated);
+
+                            alert('Draft published');
+                          } catch (err) {
+                            console.error('Publish draft failed', err);
+                            alert('Failed to publish draft');
+                          }
+                        }}>Publish</button>
+
+                        <button className="save-draft" onClick={() => {
+                          const key = `drafts_${user ? user._id : 'guest'}`;
+                          const storedRaw = localStorage.getItem(key);
+                          const arr = storedRaw ? JSON.parse(storedRaw) : [];
+                          const updated = arr.filter(item => item.id !== d.id);
+                          localStorage.setItem(key, JSON.stringify(updated));
+                          setDrafts(updated);
+                        }}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

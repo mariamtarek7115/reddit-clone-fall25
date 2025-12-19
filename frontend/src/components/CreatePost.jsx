@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./CreatePost.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
@@ -30,6 +30,9 @@ export default function CreatePost() {
   const [joiningId, setJoiningId] = useState(null);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const draftToEdit = location.state?.draftToEdit || null;
+  const [imagePreviewData, setImagePreviewData] = useState(null);
 
   // Fetch user's communities
   const fetchUserCommunities = async () => {
@@ -61,6 +64,30 @@ export default function CreatePost() {
     return () => document.removeEventListener("click", onClick);
   }, []);
 
+  // If arriving with a draft to edit, prefill fields
+  useEffect(() => {
+    if (!draftToEdit) return;
+
+    setTitle(draftToEdit.title || "");
+    setBody(draftToEdit.body || "");
+    setUrl(draftToEdit.url || "");
+    if (draftToEdit.community) setSelectedCommunity(draftToEdit.community);
+
+    // If draft contains an image data URL, convert to blob and set as `image` file and keep preview
+    if (draftToEdit.imageData) {
+      setImagePreviewData(draftToEdit.imageData);
+      (async () => {
+        try {
+          const resp = await fetch(draftToEdit.imageData);
+          const blob = await resp.blob();
+          const file = new File([blob], 'draft-image.png', { type: blob.type });
+          setImage(file);
+        } catch (err) {
+          console.error('Failed to convert draft image to file', err);
+        }
+      })();
+    }
+  }, [draftToEdit]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -94,25 +121,45 @@ export default function CreatePost() {
     if (selectedCommunity) formData.append("communityId", selectedCommunity._id);
 
     try {
-      const res = await fetch("http://localhost:5000/posts", {
-        method: "POST",
+      // If we are editing an existing post (draftToEdit.postId) send a PATCH, otherwise POST
+      const editPostId = draftToEdit?.postId || draftToEdit?.publishedPostId || draftToEdit?.postId;
+      const urlToUse = editPostId ? `${API_BASE}/posts/${editPostId}` : `${API_BASE}/posts`;
+      const methodToUse = editPostId ? "PATCH" : "POST";
+
+      const res = await fetch(urlToUse, {
+        method: methodToUse,
         body: formData,
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Failed to create post");
+        alert(data.message || (editPostId ? "Failed to update post" : "Failed to create post"));
         return;
       }
 
-      console.log("Post created:", data);
+      console.log(editPostId ? "Post updated:" : "Post created:", data);
 
       // Reset form
       setTitle("");
       setBody("");
       setImage(null);
+      setImagePreviewData(null);
       setUrl("");
+
+      // If this was a draft edit, remove it from localStorage
+      const draftedId = draftToEdit?.id;
+      if (draftedId) {
+        try {
+          const key = `drafts_${user ? user._id : 'guest'}`;
+          const storedRaw = localStorage.getItem(key);
+          const arr = storedRaw ? JSON.parse(storedRaw) : [];
+          const updated = arr.filter((item) => item.id !== draftedId);
+          localStorage.setItem(key, JSON.stringify(updated));
+        } catch (err) {
+          console.error('Failed to remove draft after publish:', err);
+        }
+      }
 
       // If the post has an associated community, go to that community page
       if (data.community && data.community.name) {
@@ -262,7 +309,7 @@ export default function CreatePost() {
           </div>
         )}
 
-        <span className="drafts">Drafts</span>
+        <button className="drafts" onClick={() => navigate('/profile', { state: { tab: 'Drafts' } })}>Drafts</button>
       </div>
 
       <div className="create-post-tabs">
@@ -324,7 +371,50 @@ export default function CreatePost() {
 
         <div className="create-post-actions">
           <div className="form-buttons">
-            <button type="submit" className="save-draft">
+            <button type="button" className="save-draft" onClick={async (e) => {
+              e.preventDefault();
+
+              // Save draft locally (per-user if logged in)
+              const key = `drafts_${user ? user._id : 'guest'}`;
+
+              const hasImage = Boolean(image);
+
+              // Prepare image as data URL if present
+              let imageData = null;
+              if (hasImage && image instanceof File) {
+                imageData = await new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => resolve(reader.result);
+                  reader.onerror = () => resolve(null);
+                  reader.readAsDataURL(image);
+                });
+              }
+
+              const draft = {
+                id: `${Date.now()}_${Math.random().toString(36).slice(2,9)}`,
+                title: title || "",
+                body: body || "",
+                url: url || "",
+                community: selectedCommunity ? { _id: selectedCommunity._id, name: selectedCommunity.name } : null,
+                imageData,
+                type: (imageData ? (body ? 'mixed' : 'image') : (url ? 'link' : (body ? 'text' : 'text'))),
+                createdAt: new Date().toISOString()
+              };
+
+              try {
+                const existingRaw = localStorage.getItem(key);
+                const existing = existingRaw ? JSON.parse(existingRaw) : [];
+                existing.unshift(draft);
+                localStorage.setItem(key, JSON.stringify(existing));
+                alert('Draft saved');
+
+                // Optionally clear the form
+                // setTitle(''); setBody(''); setImage(null); setUrl(''); setSelectedCommunity(null);
+              } catch (err) {
+                console.error('Failed to save draft:', err);
+                alert('Failed to save draft');
+              }
+            }}>
               Save Draft
             </button>
             <button type="submit" className="post-button">

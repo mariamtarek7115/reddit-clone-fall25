@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import Sidebar from "../components/Sidebar/Sidebar.jsx";
 import PostCard from "../components/PostCard.jsx";
+import { AuthContext } from "../context/AuthContext";
 import "./CommunityPage.css";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
@@ -10,6 +11,8 @@ const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000";
 const CommunityPage = () => {
   const { communityName: rawCommunityName } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext); // current user (may be undefined)
+
 
   // Normalize community name (strip leading :, r/ or slashes) to avoid malformed params
   const communityName = rawCommunityName
@@ -41,23 +44,33 @@ const CommunityPage = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  const [notFound, setNotFound] = useState(false);
+  const [isMember, setIsMember] = useState(false);
+  const [joinLoading, setJoinLoading] = useState(false);
+
   useEffect(() => {
     if (!communityName) return;
 
-    // later: fetch community from backend by name
-    setCommunity({
-      name: communityName,
-      description: `Welcome to r/${communityName}!`,
-      membersCount: 1,
-      createdAt: "Dec 19, 2025",
-      type: "Public",
-      isAdult: false,
-      isModerator: true,
-      insights: {
-        visitors: 0,
-        contributions: 0,
-      },
-    });
+    const controller = new AbortController();
+    const fetchCommunity = async () => {
+      try {
+        setNotFound(false);
+        const res = await fetch(`${API_BASE}/community/${encodeURIComponent(communityName)}`, { signal: controller.signal });
+        if (res.status === 404) {
+          setNotFound(true);
+          setCommunity(null);
+          return;
+        }
+        const data = await res.json();
+        setCommunity(data.community || data);
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error('Error fetching community:', e);
+        setCommunity(null);
+      }
+    };
+
+    fetchCommunity();
+    return () => controller.abort();
   }, [communityName]);
 
   // Fetch posts for the current community
@@ -127,6 +140,35 @@ const CommunityPage = () => {
     fetchPosts();
   }, [community, sortBy]);
 
+  // When community and user are present, check membership
+  useEffect(() => {
+    if (!community || !community._id || !user?._id) {
+      setIsMember(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const checkMembership = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/community/user/${user._id}`, { signal: controller.signal });
+        if (!res.ok) {
+          setIsMember(false);
+          return;
+        }
+        const data = await res.json();
+        const arr = data.communities || data || [];
+        const found = arr.find((c) => c._id === community._id || c.name === community.name || (`r/${c.name}` === community.name));
+        setIsMember(!!found);
+      } catch (e) {
+        if (e.name !== 'AbortError') console.error('Error checking membership:', e);
+        setIsMember(false);
+      }
+    };
+
+    checkMembership();
+    return () => controller.abort();
+  }, [community, user]);
+
   if (!community) return <div className="loading">Loading…</div>;
 
   return (
@@ -166,6 +208,58 @@ const CommunityPage = () => {
               </div>
 
               <div className="community-header-actions">
+                <button
+                  className={`join-btn ${isMember ? 'joined' : ''}`}
+                  onClick={async () => {
+                    if (!user?._id) {
+                      navigate('/login');
+                      return;
+                    }
+
+                    if (joinLoading) return;
+                    setJoinLoading(true);
+
+                    try {
+                      if (!isMember) {
+                        const res = await fetch(`${API_BASE}/community/${community._id}/join`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ userId: user._id }),
+                        });
+
+                        if (!res.ok) {
+                          const txt = await res.text();
+                          throw new Error(txt || `HTTP ${res.status}`);
+                        }
+
+                        setIsMember(true);
+                        setCommunity((prev) => ({ ...prev, membersCount: (prev.membersCount || 0) + 1 }));
+                      } else {
+                        const res = await fetch(`${API_BASE}/community/${community._id}/leave`, {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ userId: user._id }),
+                        });
+
+                        if (!res.ok) {
+                          const txt = await res.text();
+                          throw new Error(txt || `HTTP ${res.status}`);
+                        }
+
+                        setIsMember(false);
+                        setCommunity((prev) => ({ ...prev, membersCount: Math.max(0, (prev.membersCount || 1) - 1) }));
+                      }
+                    } catch (e) {
+                      console.error('Join/Leave error:', e);
+                      alert('Failed to update membership');
+                    } finally {
+                      setJoinLoading(false);
+                    }
+                  }}
+                >
+                  {isMember ? (joinLoading ? '...' : 'Joined') : (joinLoading ? '...' : 'Join')}
+                </button>
+
                 <button
                   className="create-post-btn"
                   onClick={() => navigate("/createpost")}

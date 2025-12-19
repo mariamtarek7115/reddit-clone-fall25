@@ -208,6 +208,31 @@
 }
 /* ===== Reddit-style buttons ===== */
 
+.join-btn {
+  background: #d93025; /* red */
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  transition: background 0.12s ease;
+}
+
+.join-btn.joined {
+  background: #28a745; /* green */
+}
+
+.join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Secondary pill (Mod Tools) */
 .secondary-btn {
   background: #edeff1;

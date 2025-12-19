@@ -160,7 +160,7 @@
   border: 1px solid #ccc;
   border-radius: 999px;
   font-size: 12px;
-  cursor: not-allowed;
+  cursor: pointer;
 }
 
 .post-button {

@@ -22,7 +22,7 @@ const Sidebar = ({
 
   const displayCommunities = (joinedCommunities && joinedCommunities.length > 0)
     ? joinedCommunities
-    : communities;
+    : [];
 
   useEffect(() => {
     if (!user?._id) {
@@ -158,28 +158,32 @@ const Sidebar = ({
               {sidebarOpen && <span className="start-text"> Start a community</span>}
             </button>
 
-            <button
-              className="sidebar-section-title"
-              onClick={() => navigate("/communities")}
-            >
-              COMMUNITIES
-            </button>
-
-            {displayCommunities.map((community) => {
-              const raw = community.name || "";
-              const communitySlug = raw.replace(/^r\//, "");
-              const label = raw.startsWith("r/") ? raw : `r/${raw}`;
-
-              return (
+            {displayCommunities.length > 0 && (
+              <>
                 <button
-                  className="sidebar-nav-item"
-                  key={community.id || communitySlug}
-                  onClick={() => navigate("/r/" + communitySlug)}
+                  className="sidebar-section-title"
+                  onClick={() => navigate("/communities")}
                 >
-                  {label}
+                  COMMUNITIES
                 </button>
-              );
-            })}
+
+                {displayCommunities.map((community) => {
+                  const raw = community.name || "";
+                  const communitySlug = raw.replace(/^r\//, "");
+                  const label = raw.startsWith("r/") ? raw : `r/${raw}`;
+
+                  return (
+                    <button
+                      className="sidebar-nav-item"
+                      key={community.id || communitySlug}
+                      onClick={() => navigate("/r/" + communitySlug)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </>
+            )}
           </>
         )}
       </nav>
