@@ -21,6 +21,7 @@
   flex-grow: 1;
   display: flex;
   justify-content: center;
+  position: relative; /* anchor dropdown to this area so it doesn't affect header height */
 }
 
 /* Search container */
@@ -61,11 +62,68 @@
   color: var(--muted);
 }
 
-/* Right side */
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Search dropdown */
+.search-dropdown {
+  position: absolute;
+  /* position the dropdown directly below the search input (anchored to .header-center)
+     so it won't change header height or shift other items like the avatar */
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 520px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 8px;
+  padding: 8px;
+  z-index: 200;
+}
+
+.search-loading {
+  padding: 12px;
+  color: var(--muted);
+}
+
+.search-section {
+  margin-bottom: 8px;
+}
+
+.search-section-title {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.search-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.search-item:hover {
+  background: var(--hover);
+}
+
+.search-item-title {
+  font-weight: 600;
+}
+
+.search-item-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.search-no-results {
+  padding: 12px;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* Create button (if you use it) */
@@ -132,6 +190,7 @@
 }
 
 /* Avatar style */
+/* Avatar style */
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -141,6 +200,12 @@
   border: 1px solid var(--border);
   background: var(--card);
 }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 
 /* Responsive styles for small screens */
 @media (max-width: 768px) {
