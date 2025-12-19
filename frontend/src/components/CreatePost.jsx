@@ -138,7 +138,8 @@ export default function CreatePost() {
         return;
       }
 
-      console.log(editPostId ? "Post updated:" : "Post created:", data);
+      const savedPost = data?.post || data;
+      console.log(editPostId ? "Post updated:" : "Post created:", savedPost);
 
       // Reset form
       setTitle("");
@@ -147,23 +148,39 @@ export default function CreatePost() {
       setImagePreviewData(null);
       setUrl("");
 
-      // If this was a draft edit, remove it from localStorage
+      // If this post came from a draft, update that draft to point to the SAME postId
+      // so future edits use PATCH instead of creating a new post.
       const draftedId = draftToEdit?.id;
       if (draftedId) {
         try {
           const key = `drafts_${user ? user._id : 'guest'}`;
           const storedRaw = localStorage.getItem(key);
           const arr = storedRaw ? JSON.parse(storedRaw) : [];
-          const updated = arr.filter((item) => item.id !== draftedId);
-          localStorage.setItem(key, JSON.stringify(updated));
+
+          const next = arr.map((d) => {
+            if (d.id !== draftedId) return d;
+            return {
+              ...d,
+              postId: savedPost?._id || d.postId || null,
+              title: title || "",
+              body: body || "",
+              url: url || "",
+              community: selectedCommunity ? { _id: selectedCommunity._id, name: selectedCommunity.name } : null,
+              // keep existing imageData unless a new image was chosen
+              imageData: imagePreviewData || d.imageData || null,
+              updatedAt: new Date().toISOString(),
+            };
+          });
+
+          localStorage.setItem(key, JSON.stringify(next));
         } catch (err) {
-          console.error('Failed to remove draft after publish:', err);
+          console.error('Failed to update draft after publish/update:', err);
         }
       }
 
       // If the post has an associated community, go to that community page
-      if (data.community && data.community.name) {
-        navigate(`/r/${data.community.name}`);
+      if (savedPost?.community && savedPost.community.name) {
+        navigate(`/r/${savedPost.community.name}`);
         return;
       }
 
@@ -390,23 +407,35 @@ export default function CreatePost() {
                 });
               }
 
+              // If we're editing an existing draft, keep the same draft id and postId.
+              const draftId = draftToEdit?.id || `${Date.now()}_${Math.random().toString(36).slice(2,9)}`;
               const draft = {
-                id: `${Date.now()}_${Math.random().toString(36).slice(2,9)}`,
+                id: draftId,
+                postId: draftToEdit?.postId || null,
                 title: title || "",
                 body: body || "",
                 url: url || "",
                 community: selectedCommunity ? { _id: selectedCommunity._id, name: selectedCommunity.name } : null,
-                imageData,
-                type: (imageData ? (body ? 'mixed' : 'image') : (url ? 'link' : (body ? 'text' : 'text'))),
-                createdAt: new Date().toISOString()
+                // keep existing imageData if no new image was selected
+                imageData: imageData || imagePreviewData || draftToEdit?.imageData || null,
+                type: (imageData || imagePreviewData || draftToEdit?.imageData) ? (body ? 'mixed' : 'image') : (url ? 'link' : (body ? 'text' : 'text')),
+                createdAt: draftToEdit?.createdAt || new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
               };
 
               try {
                 const existingRaw = localStorage.getItem(key);
                 const existing = existingRaw ? JSON.parse(existingRaw) : [];
-                existing.unshift(draft);
+
+                const idx = existing.findIndex((d) => d.id === draftId);
+                if (idx >= 0) {
+                  existing[idx] = draft;
+                } else {
+                  existing.unshift(draft);
+                }
+
                 localStorage.setItem(key, JSON.stringify(existing));
-                alert('Draft saved');
+                navigate('/profile', { state: { tab: 'Drafts' } });
 
                 // Optionally clear the form
                 // setTitle(''); setBody(''); setImage(null); setUrl(''); setSelectedCommunity(null);

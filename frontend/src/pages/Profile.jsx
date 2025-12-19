@@ -244,7 +244,7 @@ const Profile = () => {
                         }}>Edit</button>
 
                         <button className="save-draft" onClick={async () => {
-                          // Publish draft: attempt to POST like CreatePost
+                          // Publish draft: create once, then edit the SAME post using PATCH
                           try {
                             const formData = new FormData();
                             formData.append('title', d.title || '');
@@ -259,22 +259,35 @@ const Profile = () => {
                               formData.append('image', blob, 'draft-image.png');
                             }
 
-                            const res = await fetch(`${API_BASE}/posts`, { method: 'POST', body: formData });
+                            const key = `drafts_${user ? user._id : 'guest'}`;
+                            const isEdit = Boolean(d.postId);
+                            const url = isEdit ? `${API_BASE}/posts/${d.postId}` : `${API_BASE}/posts`;
+                            const method = isEdit ? 'PATCH' : 'POST';
+
+                            const res = await fetch(url, { method, body: formData });
                             const data = await res.json();
                             if (!res.ok) throw new Error(data.message || 'Failed to publish');
 
-                            // On success remove draft
-                            const key = `drafts_${user ? user._id : 'guest'}`;
+                            const savedPost = data?.post || data;
                             const storedRaw = localStorage.getItem(key);
                             const arr = storedRaw ? JSON.parse(storedRaw) : [];
-                            const updated = arr.filter(item => item.id !== d.id);
+
+                            const updated = arr.map((item) => {
+                              if (item.id !== d.id) return item;
+                              return {
+                                ...item,
+                                postId: savedPost?._id || item.postId || null,
+                                updatedAt: new Date().toISOString(),
+                              };
+                            });
+
                             localStorage.setItem(key, JSON.stringify(updated));
                             setDrafts(updated);
 
-                            alert('Draft published');
+                            
                           } catch (err) {
                             console.error('Publish draft failed', err);
-                            alert('Failed to publish draft');
+                            
                           }
                         }}>Publish</button>
 
