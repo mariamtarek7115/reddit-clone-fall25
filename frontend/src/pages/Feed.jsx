@@ -259,19 +259,7 @@ export default function Feed() {
     setJoinedFeatured((prev) => !prev);
   };
 
-  // Test API directly
-  const testApiDirectly = async () => {
-    try {
-      console.log("🧪 Testing API directly...");
-      const res = await fetch(`${API_BASE}/posts`);
-      const data = await res.json();
-      console.log("🧪 Direct test result:", data);
-      alert(`Direct test: ${data.posts ? data.posts.length : 0} posts found`);
-    } catch (error) {
-      console.error("🧪 Test failed:", error);
-      alert(`Test failed: ${error.message}`);
-    }
-  };
+  
 
   return (
     <div className="feed">
@@ -288,25 +276,7 @@ export default function Feed() {
         <Header currentUser={currentUser} />
 
         <div className="feed-content">
-          {/* Test API Button */}
-          <button
-            onClick={testApiDirectly}
-            style={{
-              position: "fixed",
-              top: "80px",
-              right: "20px",
-              zIndex: 1000,
-              background: "#3b82f6",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "20px",
-              cursor: "pointer",
-              fontSize: "12px",
-            }}
-          >
-            Test API
-          </button>
+         
 
           <div className="feed-grid">
             {/* Posts Column */}
@@ -447,20 +417,7 @@ export default function Feed() {
                   <div className="empty-icon">📭</div>
                   <h3>No posts found</h3>
                   <p>Be the first to create a post!</p>
-                  <button
-                    onClick={testApiDirectly}
-                    style={{
-                      background: "transparent",
-                      border: "1px solid var(--accent)",
-                      color: "var(--accent)",
-                      padding: "8px 16px",
-                      borderRadius: "20px",
-                      marginTop: "12px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Test API Connection
-                  </button>
+                  
                 </div>
               )}
 

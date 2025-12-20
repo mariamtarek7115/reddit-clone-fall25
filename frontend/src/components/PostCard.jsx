@@ -49,7 +49,8 @@ export default function PostCard({
   const authorName = author?.username || "unknown";
   const communityName = community?.name || "general";
 
-  const isMine = Boolean(user?._id && String(author?._id) === String(user._id));
+  const authorId = typeof author === "string" ? author : author?._id;
+const isMine = Boolean(user?._id && authorId && String(authorId) === String(user._id));
 
 
   const imageSrc =

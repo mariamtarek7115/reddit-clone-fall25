@@ -467,18 +467,7 @@ const Profile = () => {
                             : "N/A"}
                         </span>
                       </div>
-                      <div className="info-item">
-                        <span className="info-label">Karma:</span>
-                        <span className="info-value">{overview?.stats?.karma || 0}</span>
-                      </div>
-                      <div className="info-item">
-                        <span className="info-label">Post Karma:</span>
-                        <span className="info-value">{overview?.stats?.postKarma || 0}</span>
-                      </div>
-                      <div className="info-item">
-                        <span className="info-label">Comment Karma:</span>
-                        <span className="info-value">{overview?.stats?.commentKarma || 0}</span>
-                      </div>
+                     
                     </div>
                   </div>
                 </div>

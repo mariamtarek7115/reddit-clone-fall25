@@ -40,8 +40,10 @@ exports.getUserPosts = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const posts = await Post.find({ author: user._id, isDeleted: false })
-      .populate("community", "name")
-      .sort({ createdAt: -1 });
+  .populate("author", "_id username")        
+  .populate("community", "_id name")
+  .sort({ createdAt: -1 });
+
 
     res.json({ posts });
   } catch (err) {
@@ -90,8 +92,12 @@ exports.getUserVotes = async (req, res) => {
     const commentIds = votes.filter(v => v.targetType === "Comment").map(v => v.targetId);
 
     const [posts, comments] = await Promise.all([
-      Post.find({ _id: { $in: postIds }, isDeleted: false }).populate("community", "name"),
-      Comment.find({ _id: { $in: commentIds }, isDeleted: false }).populate("post", "title"),
+     Post.find({ _id: { $in: postIds }, isDeleted: false })
+  .populate("author", "_id username")      
+  .populate("community", "_id name"),
+     Comment.find({ _id: { $in: commentIds }, isDeleted: false })
+  .populate("author", "_id username")
+  .populate("post", "_id title"),
     ]);
 
     res.json({ posts, comments });
