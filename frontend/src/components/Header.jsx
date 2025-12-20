@@ -40,7 +40,7 @@ const Header = () => {
     }
 
     try {
-      // Explicit user search format: u/username — validate via global search
+      
       if (qtrim.startsWith("u/")) {
         const uname = qtrim.slice(2);
         const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(uname)}`);
@@ -54,7 +54,7 @@ const Header = () => {
         return;
       }
 
-      // Explicit community search format: r/community — validate by hitting community endpoint
+    
       if (qtrim.startsWith("r/")) {
         const cname = qtrim.slice(2);
         const res = await fetch(`${API_BASE}/community/${encodeURIComponent(cname)}`);
@@ -68,7 +68,7 @@ const Header = () => {
         return;
       }
 
-      // General search: query backend /search endpoint
+   
       const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(qtrim)}`);
       const data = await res.json();
 
