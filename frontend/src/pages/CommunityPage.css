@@ -1,20 +1,27 @@
 .reddit-shell {
   display: flex;
+  background: var(--bg);
+  color: var(--text);
 }
 
+/* Main container */
 .community-page {
   flex: 1;
-  background: #dae0e6;
+  background: var(--bg);
+  color: var(--text);
 }
 
+/* Banner */
 .community-banner {
   height: 120px;
-  background: #edeff1;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
 }
 
+/* Header */
 .community-header {
-  background: white;
-  border-bottom: 1px solid #ccc;
+  background: var(--card2);
+  border-bottom: 1px solid var(--border);
 }
 
 .community-header-inner {
@@ -29,8 +36,8 @@
 .community-icon {
   width: 80px;
   height: 80px;
-  background: black;
-  color: white;
+  background: var(--text);
+  color: var(--bg);
   font-size: 32px;
   font-weight: bold;
   border-radius: 50%;
@@ -42,55 +49,80 @@
 .community-header-text h1 {
   margin: 0;
   font-size: 28px;
+  color: var(--text);
 }
 
 .community-header-text span {
   font-size: 14px;
-  color: #7c7c7c;
+  color: var(--muted);
 }
 
+/* Header actions */
 .community-header-actions {
   margin-left: auto;
   display: flex;
   gap: 8px;
   position: relative;
+  align-items: center;
 }
 
+/* Buttons */
 .create-post-btn {
-  background: #0079d3;
+  background: var(--blue);
   color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
-.mod-tools-btn {
-  background: #edeff1;
-  border: none;
+.create-post-btn:hover {
+  opacity: 0.92;
+}
+
+.mod-tools-btn,
+.more-btn {
+  background: var(--hover);
+  color: var(--text);
+  border: 1px solid var(--border);
   padding: 8px 12px;
   border-radius: 999px;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .more-btn {
-  background: #edeff1;
-  border: none;
-  padding: 8px 12px;
   border-radius: 50%;
-  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mod-tools-btn:hover,
+.more-btn:hover {
+  background: var(--card);
+}
+
+/* Menu */
+.menu-wrapper {
+  position: relative;
 }
 
 .community-menu {
   position: absolute;
   right: 0;
   top: 44px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
   min-width: 220px;
   z-index: 20;
+  overflow: hidden;
 }
 
 .community-menu button {
@@ -100,16 +132,19 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .community-menu button:hover {
-  background: #f6f7f8;
+  background: var(--hover);
 }
 
 .community-menu .danger {
   color: #d93025;
 }
 
+/* Content layout */
 .community-content {
   max-width: 984px;
   margin: 24px auto;
@@ -118,9 +153,11 @@
   gap: 24px;
 }
 
+/* Sort bar */
 .sort-bar {
-  background: white;
-  border-radius: 4px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: 8px;
   margin-bottom: 16px;
   display: flex;
@@ -133,37 +170,52 @@
   padding: 6px 12px;
   cursor: pointer;
   border-radius: 999px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sort-bar button:hover {
+  background: var(--hover);
 }
 
 .sort-bar button.active {
-  background: #0079d3;
+  background: var(--blue);
   color: white;
 }
 
+/* Empty feed */
 .empty-feed {
-  background: white;
-  border-radius: 4px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: 64px 24px;
   text-align: center;
 }
 
 .empty-feed h2 {
   font-size: 22px;
+  color: var(--text);
 }
 
 .empty-feed p {
-  color: #7c7c7c;
+  color: var(--muted);
   margin: 12px 0;
 }
 
+/* CTA */
 .primary-cta {
-  background: #0079d3;
+  background: var(--blue);
   color: white;
   border: none;
   padding: 10px 20px;
   border-radius: 999px;
   font-weight: 700;
   cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.primary-cta:hover {
+  opacity: 0.92;
 }
 
 .primary-cta.full {
@@ -171,6 +223,7 @@
   margin-top: 12px;
 }
 
+/* Right sidebar */
 .community-right {
   display: flex;
   flex-direction: column;
@@ -179,37 +232,57 @@
 
 .about-card,
 .mod-card {
-  background: white;
-  border-radius: 4px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: 16px;
+  color: var(--text);
 }
 
+.about-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Stats */
 .stats {
   display: flex;
   gap: 24px;
   margin: 16px 0;
 }
 
-.stats span {
-  font-size: 12px;
-  color: #7c7c7c;
+.stats strong {
+  font-size: 18px;
+  display: block;
 }
 
+.stats span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Misc */
 .mod-row {
   margin: 8px 0;
+  color: var(--text);
 }
 
 .link-btn {
   background: none;
   border: none;
-  color: #0079d3;
+  color: var(--blue);
   cursor: pointer;
   padding: 0;
+  font-weight: 700;
 }
-/* ===== Reddit-style buttons ===== */
 
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+/* Join button */
 .join-btn {
-  background: #d93025; /* red */
+  background: #d93025;
   color: white;
   border: none;
   padding: 8px 14px;
@@ -221,11 +294,11 @@
   align-items: center;
   justify-content: center;
   min-width: 96px;
-  transition: background 0.12s ease;
+  transition: opacity 0.12s ease;
 }
 
 .join-btn.joined {
-  background: #28a745; /* green */
+  background: var(--green);
 }
 
 .join-btn:disabled {
@@ -233,35 +306,12 @@
   cursor: not-allowed;
 }
 
-/* Secondary pill (Mod Tools) */
-.secondary-btn {
-  background: #edeff1;
-  color: #1a1a1b;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.secondary-btn:hover {
-  background: #e2e5e7;
-}
-
-/* Soft gray button (View all moderators) */
-.soft-btn {
-  background: #f6f7f8;
-  border: 1px solid #d3d6da;
-  color: #1a1a1b;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 8px;
-}
-
-.soft-btn:hover {
-  background: #eceef0;
+/* Responsive */
+@media (max-width: 980px) {
+  .community-content {
+    grid-template-columns: 1fr;
+  }
+  .community-right {
+    order: 2;
+  }
 }

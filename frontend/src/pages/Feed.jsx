@@ -380,13 +380,7 @@ export default function Feed() {
                 </article>
               )}
 
-              {/* Loading / Error */}
-              {loading && (
-                <div className="feed-status loading">
-                  <div className="loading-spinner"></div>
-                  <span>Loading posts...</span>
-                </div>
-              )}
+             
 
               {err && (
                 <div className="feed-status feed-status--error">
@@ -421,12 +415,7 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Load More */}
-              {!loading && !err && filteredPosts.length > 0 && (
-                <div className="load-more-container">
-                  <button className="load-more-btn">Load More Posts</button>
-                </div>
-              )}
+              
             </section>
 
             {/* Communities sidebar */}

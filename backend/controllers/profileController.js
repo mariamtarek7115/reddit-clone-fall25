@@ -106,3 +106,44 @@ exports.getUserVotes = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// PATCH /profile/me
+exports.updateMyProfile = async (req, res) => {
+  try {
+    const { userId, username } = req.body;
+
+    if (!userId) return res.status(401).json({ message: "Not authorized" });
+
+    if (typeof username !== "string" || username.trim().length < 3) {
+      return res.status(400).json({ message: "Username must be at least 3 characters." });
+    }
+
+    const newUsername = username.trim();
+
+    // prevent duplicates
+    const existing = await User.findOne({ username: newUsername });
+    if (existing && existing._id.toString() !== userId) {
+      return res.status(400).json({ message: "Username already taken." });
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { username: newUsername },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updated) return res.status(404).json({ message: "User not found" });
+
+    return res.json({
+      message: "Profile updated",
+      user: {
+        _id: updated._id,
+        username: updated.username,
+        bio: updated.bio || "",
+        createdAt: updated.createdAt,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

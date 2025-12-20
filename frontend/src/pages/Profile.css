@@ -316,3 +316,29 @@
 .drafts-list .save-draft {
   padding: 6px 12px;
 }
+.edit-username-btn,
+.edit-username-save,
+.edit-username-cancel {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.edit-username-btn:hover,
+.edit-username-save:hover,
+.edit-username-cancel:hover {
+  background: var(--hover);
+}
+
+.edit-username-input {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}

@@ -5,7 +5,7 @@ export const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("auth_user");
-    return saved ? JSON.parse(saved) : null; // { _id, username }
+    return saved ? JSON.parse(saved) : null; // { _id, username, ... }
   });
 
   useEffect(() => {
@@ -13,11 +13,27 @@ export function AuthProvider({ children }) {
     else localStorage.removeItem("auth_user");
   }, [user]);
 
+  // Merge helper (e.g. update username, bio, avatar, etc.)
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      return { ...prev, ...patch };
+    });
+  };
+
   const value = useMemo(
     () => ({
       user,
-      login: (userData) => setUser(userData), // expects { _id, username }
+
+      // keep existing API
+      login: (userData) => setUser(userData),
       logout: () => setUser(null),
+
+      // NEW: allow direct set
+      setUser,
+
+      // NEW: allow partial updates
+      updateUser,
     }),
     [user]
   );

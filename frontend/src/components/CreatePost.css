@@ -2,17 +2,19 @@
   max-width: 700px;
   width: 100%;
   margin: 20px auto;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 16px 20px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow);
+  color: var(--text);
 }
 
 .create-post-wrapper h2 {
   margin-bottom: 12px;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .create-post-header {
@@ -20,119 +22,183 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  position: relative; /* for dropdown */
+  position: relative;
+  gap: 10px;
 }
 
+/* Community selector */
+.community-selector {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 700;
+  transition: background 0.15s ease;
+}
+
+.community-selector:hover {
+  background: var(--hover);
+}
+
+.drafts {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.drafts:hover {
+  text-decoration: underline;
+}
+
+/* Dropdown */
 .community-dropdown {
   position: absolute;
   left: 0;
-  top: 48px;
-  background: #fff;
-  border: 1px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border-radius: 8px;
+  top: 52px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 10px;
   padding: 8px;
-  min-width: 220px;
+  min-width: 260px;
   z-index: 40;
+}
+
+/* dropdown input */
+.community-dropdown input {
+  width: 100%;
+  padding: 10px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  color: var(--text);
+  outline: none;
+}
+
+.community-dropdown input::placeholder {
+  color: var(--muted);
 }
 
 .community-item {
   display: block;
   width: 100%;
   text-align: left;
-  padding: 8px 10px;
+  padding: 10px 10px;
   background: none;
   border: none;
   cursor: pointer;
-  font-weight: 600;
-  color: #333;
-  border-radius: 6px;
+  font-weight: 700;
+  color: var(--text);
+  border-radius: 8px;
 }
 
 .community-item:hover {
-  background: #f6f7f8;
+  background: var(--hover);
 }
 
 .community-item.selected {
-  background: #0079d3;
-  color: #fff;
+  background: var(--blue);
+  color: white;
 }
 
-.community-loading, .community-error, .community-empty {
+.community-loading,
+.community-error,
+.community-empty {
   padding: 8px 10px;
-  color: #666;
+  color: var(--muted);
+  font-weight: 600;
 }
 
-/* Reuse community-item styles for small buttons in search results */
-.community-dropdown .community-item[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.community-selector {
-  background: #f6f7f8;
-  border: 1px solid #ccc;
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.drafts {
-  font-size: 14px;
-  color: #888;
-}
-
+/* Tabs */
 .create-post-tabs {
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
 }
 
 .tab-button {
   background: none;
   border: none;
-  padding: 6px 12px;
+  padding: 8px 12px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 800;
   font-size: 14px;
-  color: #555;
+  color: var(--muted);
   border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-button:hover {
+  color: var(--text);
 }
 
 .tab-button.active {
-  border-bottom: 2px solid #0079d3;
-  color: #0079d3;
+  border-bottom: 2px solid var(--blue);
+  color: var(--blue);
 }
 
+/* Form */
 .create-post-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .create-post-title {
-  padding: 10px 12px;
+  padding: 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card2);
+  color: var(--text);
+  outline: none;
 }
 
-.char-count {
-  align-self: flex-end;
-  font-size: 12px;
-  color: #888;
+.create-post-title::placeholder {
+  color: var(--muted);
 }
 
 .create-post-body {
-  padding: 10px 12px;
+  padding: 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   min-height: 120px;
   resize: vertical;
+  background: var(--card2);
+  color: var(--text);
+  outline: none;
 }
 
+.create-post-body::placeholder {
+  color: var(--muted);
+}
+
+.create-post-image,
+.create-post-url {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card2);
+  color: var(--text);
+}
+
+/* Character count */
+.char-count {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Actions */
 .create-post-actions {
   display: flex;
   justify-content: space-between;
@@ -140,39 +206,49 @@
   margin-top: 12px;
 }
 
-.tags-button {
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #f6f7f8;
-  border: 1px solid #ccc;
-  font-size: 12px;
-  cursor: not-allowed;
-}
-
 .form-buttons {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
+/* Buttons */
 .save-draft {
-  padding: 6px 12px;
-  background: #f6f7f8;
-  border: 1px solid #ccc;
+  padding: 8px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   cursor: pointer;
+  font-weight: 800;
+  color: var(--text);
+  transition: background 0.15s ease;
+}
+
+.save-draft:hover {
+  background: var(--hover);
 }
 
 .post-button {
-  padding: 6px 12px;
-  background: #0079d3;
+  padding: 8px 14px;
+  background: var(--blue);
   border: none;
   border-radius: 999px;
-  color: #fff;
-  font-weight: 600;
+  color: white;
+  font-weight: 800;
   cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
 .post-button:hover {
-  background: #0060a8;
+  opacity: 0.92;
+}
+
+.tags-button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: not-allowed;
+  color: var(--muted);
 }
