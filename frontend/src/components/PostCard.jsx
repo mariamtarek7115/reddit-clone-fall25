@@ -49,11 +49,8 @@ export default function PostCard({
   const authorName = author?.username || "unknown";
   const communityName = community?.name || "general";
 
-  const isMine = Boolean(
-    user &&
-      (String(author?._id || "") === String(user?._id || "") ||
-        String(authorName || "").toLowerCase() === String(user?.username || "").toLowerCase())
-  );
+  const isMine = Boolean(user?._id && String(author?._id) === String(user._id));
+
 
   const imageSrc =
     mediaUrl && mediaUrl.startsWith("/uploads")
@@ -136,37 +133,41 @@ export default function PostCard({
           )}
         </div>
 
-        <div className="post-card-header-right" ref={menuRef}>
-          <button
-            className="post-card-more"
-            type="button"
-            aria-label="Post menu"
-            onClick={(e) => {
-              e.stopPropagation();
-              setMenuOpen((v) => !v);
-            }}
-          >
-            ⋯
-          </button>
+   <div className="post-card-header-right" ref={menuRef}>
+  <button
+    className="post-card-more"
+    type="button"
+    aria-label="Post menu"
+    onClick={(e) => {
+      e.stopPropagation();
+      setMenuOpen((v) => !v);
+    }}
+  >
+    ⋯
+  </button>
 
-          {menuOpen && (
-            <div className="post-card-menu">
-              <button type="button" onClick={handleSave}>
-                Save
-              </button>
-              {isMine && (
-                <>
-                  <button type="button" onClick={handleEdit}>
-                    Edit
-                  </button>
-                  <button type="button" className="danger" onClick={handleDelete}>
-                    Delete
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+  {menuOpen && (
+    <div className="post-card-menu" onClick={(e) => e.stopPropagation()}>
+      {/* ✅ Always allow Save (even if not author) */}
+      <button type="button" onClick={handleSave}>
+        Save
+      </button>
+
+      {/* ✅ Only author sees Edit/Delete */}
+      {isMine && (
+        <>
+          <button type="button" onClick={handleEdit}>
+            Edit
+          </button>
+          <button type="button" className="danger" onClick={handleDelete}>
+            Delete
+          </button>
+        </>
+      )}
+    </div>
+  )}
+</div>
+
       </div>
 
       {/* Title */}

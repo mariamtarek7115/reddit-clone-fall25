@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
   },
 });
 
-// Only accept image files and limit size to 5MB
+
 const fileFilter = (req, file, cb) => {
   if (file.mimetype && file.mimetype.startsWith("image/")) cb(null, true);
   else cb(new Error("Only image files are allowed"), false);
@@ -33,7 +33,7 @@ const {
   deletePost,
 } = require("../controllers/postController");
 
-// Feed
+
 router.get("/", getFeedPosts);
 
 // Filters
