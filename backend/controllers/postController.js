@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Post = require("../models/Post");
 const User = require("../models/User");
 const Community = require("../models/Community");
+const CommunityMember = require("../models/CommunityMember");
 
 
 const toInt = (val, fallback) => {
@@ -267,5 +268,65 @@ exports.deletePost = async (req, res) => {
   } catch (err) {
     console.error("deletePost error:", err);
     return res.status(500).json({ message: "Server error deleting post" });
+  }
+};
+exports.getMyFeedPosts = async (req, res) => {
+  try {
+    const sort = (req.query.sort || "new").toLowerCase();
+    const page = Math.max(1, toInt(req.query.page, 1));
+    const limit = Math.min(50, Math.max(1, toInt(req.query.limit, 10)));
+    const skip = (page - 1) * limit;
+
+    // ✅ You can pass userId from frontend (like you do everywhere)
+    const userId = req.query.userId;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Valid userId is required" });
+    }
+
+    let sortObj = { createdAt: -1 };
+    if (sort === "top") sortObj = { upvotes: -1, createdAt: -1 };
+    if (sort === "hot") sortObj = { commentsCount: -1, createdAt: -1 };
+
+    // ✅ Find joined communities from CommunityMember collection
+    const memberships = await CommunityMember.find({ user: userId })
+      .select("community")
+      .lean();
+
+    const joinedCommunityIds = memberships.map((m) => m.community);
+
+    // 1) Posts from joined communities
+    const joinedCommunityPosts = await Post.find({
+      isDeleted: false,
+      community: { $in: joinedCommunityIds },
+    })
+      .populate("author", "username")
+      .populate("community", "name")
+      .sort(sortObj)
+      .lean();
+
+    // 2) Other posts (including posts with no community)
+    const otherPosts = await Post.find({
+      isDeleted: false,
+      $or: [
+        { community: { $nin: joinedCommunityIds } },
+        { community: { $exists: false } },
+        { community: null },
+      ],
+    })
+      .populate("author", "username")
+      .populate("community", "name")
+      .sort(sortObj)
+      .lean();
+
+    const combined = [...joinedCommunityPosts, ...otherPosts];
+
+    // paginate after combining
+    const total = combined.length;
+    const posts = combined.slice(skip, skip + limit);
+
+    return res.json({ page, limit, total, posts });
+  } catch (err) {
+    console.error("getMyFeedPosts error:", err);
+    return res.status(500).json({ message: "Server error fetching my feed" });
   }
 };

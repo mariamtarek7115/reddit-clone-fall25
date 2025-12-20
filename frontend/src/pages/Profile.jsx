@@ -21,6 +21,8 @@ const Profile = () => {
   const [sidebarActive, setSidebarActive] = useState("Home");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  
+
   // Tabs
   const [activeTab, setActiveTab] = useState(location.state?.tab || "Overview");
 
@@ -60,6 +62,8 @@ const Profile = () => {
       setActiveTab(location.state.tab);
     }
   }, [location.state]);
+
+  
 
   // Load drafts when Drafts tab activated
   useEffect(() => {
@@ -266,7 +270,7 @@ const Profile = () => {
           <div className="profile-banner"></div>
           <div className="profile-info">
             <div className="profile-avatar"></div>
-            <div className="profile-details">
+              <div className="profile-details">
               <h1 className="profile-username">u/{username}</h1>
               <div className="profile-stats">
                 <span className="profile-stat">
@@ -274,9 +278,6 @@ const Profile = () => {
                 </span>
                 <span className="profile-stat">
                   <strong>{overview?.stats?.commentsCount || 0}</strong> Comments
-                </span>
-                <span className="profile-stat">
-                  <strong>{overview?.stats?.karma || 0}</strong> Karma
                 </span>
               </div>
               {overview?.user?.bio && <p className="profile-bio">{overview.user.bio}</p>}
@@ -343,7 +344,7 @@ const Profile = () => {
                         </button>
 
                         <button className="save-draft" onClick={async () => {
-                          // Publish draft: create once, then edit the SAME post using PATCH
+                          
                           try {
                             const formData = new FormData();
                             formData.append('title', d.title || '');
@@ -352,7 +353,7 @@ const Profile = () => {
                             if (d.url) formData.append('url', d.url);
                             if (d.community?._id) formData.append('communityId', d.community._id);
                             if (d.imageData) {
-                              // Convert data URL back to blob
+                              
                               const res = await fetch(d.imageData);
                               const blob = await res.blob();
                               formData.append('image', blob, 'draft-image.png');

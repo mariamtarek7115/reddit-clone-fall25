@@ -6,6 +6,9 @@ import { AuthContext } from "../context/AuthContext";
 
 const API_BASE = "http://localhost:5000";
 
+// Lightweight ObjectId validator (24 hex chars)
+const isValidObjectId = (id) => typeof id === "string" && /^[a-fA-F0-9]{24}$/.test(id);
+
 export default function PostCard({
   post,
   onVote,
@@ -88,6 +91,12 @@ export default function PostCard({
   };
 
   const handleEdit = () => {
+    if (!isValidObjectId(postId)) {
+      alert("Cannot edit: invalid post id");
+      setMenuOpen(false);
+      return;
+    }
+
     setMenuOpen(false);
     navigate("/createpost", {
       state: {
@@ -109,7 +118,10 @@ export default function PostCard({
     if (!user?._id) return;
     const ok = window.confirm("Delete this post?");
     if (!ok) return;
-
+    if (!isValidObjectId(postId)) {
+      alert("Cannot delete: invalid post id");
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/posts/${postId}`, {
         method: "DELETE",
