@@ -30,7 +30,7 @@ function App() {
   return (
     <div className="App">
       <Routes>
-        {/* ✅ First page is Signup */}
+       
         <Route
           path="/"
           element={
@@ -40,7 +40,7 @@ function App() {
           }
         />
 
-        {/* ✅ Public only */}
+        
         <Route
           path="/signup"
           element={
@@ -58,7 +58,7 @@ function App() {
           }
         />
 
-        {/* ✅ Protected */}
+        
         <Route
           path="/feed"
           element={
@@ -133,7 +133,7 @@ function App() {
           }
         />
 
-        {/* ✅ fallback */}
+      
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
