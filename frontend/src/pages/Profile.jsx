@@ -27,6 +27,9 @@ const Profile = () => {
   // Drafts state
   const [drafts, setDrafts] = useState([]);
 
+  // Saved state
+  const [savedPosts, setSavedPosts] = useState([]);
+
   // Sidebar dummy communities
   const [communities] = useState([
     { id: 1, name: "r/JavaScript" },
@@ -70,6 +73,21 @@ const Profile = () => {
     } catch (err) {
       console.error("Failed to load drafts", err);
       setDrafts([]);
+    }
+  }, [activeTab, user]);
+
+  // Load saved when Saved tab activated
+  useEffect(() => {
+    if (activeTab !== "Saved") return;
+
+    const key = `saved_${user ? user._id : "guest"}`;
+    try {
+      const raw = localStorage.getItem(key);
+      const arr = raw ? JSON.parse(raw) : [];
+      setSavedPosts(Array.isArray(arr) ? arr : []);
+    } catch (err) {
+      console.error("Failed to load saved", err);
+      setSavedPosts([]);
     }
   }, [activeTab, user]);
 
@@ -165,6 +183,9 @@ const Profile = () => {
   // Fetch based on tab
   useEffect(() => {
     if (!username) return;
+
+    // Drafts/Saved are local-only tabs.
+    if (activeTab === "Drafts" || activeTab === "Saved") return;
 
     const fetchTabData = async () => {
       setLoading(true);
@@ -267,7 +288,7 @@ const Profile = () => {
         <NavigationMenu
           onTabChange={handleTabChange}
           activeTab={activeTab}
-          tabs={["Overview", "Posts", "Comments", "Upvoted", "Downvoted", "Drafts"]}
+          tabs={["Overview", "Posts", "Comments", "Upvoted", "Downvoted", "Drafts", "Saved"]}
         />
 
         {/* Tab Content */}
@@ -379,6 +400,30 @@ const Profile = () => {
                         }}>Delete</button>
                       </div>
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Saved handling */}
+          {activeTab === "Saved" && !loading && !error && (
+            <div className="tab-saved">
+              <h2 className="section-title">Saved</h2>
+              {savedPosts.length === 0 ? (
+                <div className="empty-state">
+                  <p>No saved posts yet.</p>
+                </div>
+              ) : (
+                <div className="posts-list">
+                  {savedPosts.map((p) => (
+                    <PostCard
+                      key={p._id || p.id}
+                      post={p}
+                      onVote={handleVote}
+                      showCommunity={true}
+                      showFullContent={false}
+                    />
                   ))}
                 </div>
               )}

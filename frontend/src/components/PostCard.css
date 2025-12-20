@@ -24,6 +24,12 @@
   margin-bottom: 12px;
 }
 
+.post-card-header-right {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .post-card-header-left {
   display: flex;
   align-items: center;
@@ -70,6 +76,38 @@
 
 .post-card-more:hover {
   background-color: var(--hover);
+}
+
+.post-card-menu {
+  position: absolute;
+  right: 0;
+  top: 34px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 160px;
+  overflow: hidden;
+  z-index: 50;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.post-card-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.post-card-menu button:hover {
+  background-color: var(--hover);
+}
+
+.post-card-menu button.danger {
+  color: #dc2626;
 }
 
 /* Title */
